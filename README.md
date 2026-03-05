@@ -60,14 +60,16 @@ console.log(alive) // true
 await client.close()
 ```
 
+> **Security note:** In production, always use environment variables for credentials and enable TLS (`tcps://`) to encrypt the connection. Never hardcode passwords in source code.
+
 ## Configuration
 
 ```typescript
 const client = createClient({
   // Connection
   host: 'localhost:9000',       // or use url: 'tcp://user:pass@host:9000/db'
-  username: 'default',
-  password: '',
+  username: process.env.CLICKHOUSE_USER ?? 'default',
+  password: process.env.CLICKHOUSE_PASSWORD ?? '',
   database: 'default',
 
   // Behavior
@@ -199,14 +201,14 @@ Performance comparison against the official HTTP-based `@clickhouse/client` driv
 
 | Scenario | Rows | TCP (ms) | HTTP (ms) | Speedup |
 |----------|------|----------|-----------|---------|
-| Ping (avg x50) | - | 349.05 | 175.29 | 0.50x |
-| SELECT 1k rows | 1,000 | 373.03 | 204.12 | 0.55x |
-| SELECT 100k rows | 100,000 | 1,069.61 | 2,638.63 | **2.47x** |
-| INSERT 10k rows | 10,000 | 1,972.38 | 999.49 | 0.51x |
-| INSERT 100k rows | 100,000 | 2,220.15 | 6,117.98 | **2.76x** |
-| Stream 500k rows | 500,000 | 5,768.92 | 14,855.01 | **2.58x** |
+| Ping (avg x50) | - | 406.05 | 175.59 | 0.43x |
+| SELECT 1k rows | 1,000 | 380.27 | 209.78 | 0.55x |
+| SELECT 100k rows | 100,000 | 1,478.09 | 2,780.24 | **1.88x** |
+| INSERT 10k rows | 10,000 | 1,696.50 | 1,676.84 | 0.99x |
+| INSERT 100k rows | 100,000 | 6,412.97 | 1,592.95 | 0.25x |
+| Stream 500k rows | 500,000 | 6,239.10 | 14,455.42 | **2.32x** |
 
-The TCP native protocol excels at large data transfers (100k+ rows) where binary serialization avoids the overhead of JSON parsing. For small operations, HTTP benefits from lower connection overhead on remote servers.
+The TCP native protocol excels at large streaming reads (100k+ rows) where binary serialization avoids the overhead of JSON parsing. For small operations and bulk inserts, HTTP benefits from lower connection overhead on remote servers.
 
 ## Known Limitations
 
