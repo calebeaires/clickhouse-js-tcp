@@ -30,7 +30,8 @@ export function blockToColumnar(
       if (!result[col.name]) {
         result[col.name] = []
       }
-      result[col.name].push(...col.data)
+      const arr = result[col.name]
+      for (let i = 0; i < col.data.length; i++) arr.push(col.data[i])
     }
   }
 

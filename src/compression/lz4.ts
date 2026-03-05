@@ -3,6 +3,7 @@ import { CompressionMethod } from '../protocol/packet_types'
 
 const LZ4_HEADER_SIZE = 9 // method(1) + compressed_size(4) + uncompressed_size(4)
 const CHECKSUM_SIZE = 16
+const MAX_DECOMPRESSED_BLOCK_SIZE = 1_073_741_824 // 1GB — prevent decompression bombs
 
 /**
  * Compress a block of data using LZ4 block compression.
@@ -214,11 +215,17 @@ export function lz4DecompressBlock(
   input: Buffer,
   uncompressedSize: number,
 ): Buffer {
+  if (uncompressedSize > MAX_DECOMPRESSED_BLOCK_SIZE) {
+    throw new Error(
+      `LZ4: decompressed size ${uncompressedSize} exceeds maximum allowed ${MAX_DECOMPRESSED_BLOCK_SIZE}`,
+    )
+  }
   const output = Buffer.allocUnsafe(uncompressedSize)
   let ip = 0
   let op = 0
 
   while (ip < input.length) {
+    if (ip >= input.length) throw new Error('LZ4: unexpected end of input')
     const token = input[ip++]
 
     // Literal length
@@ -226,9 +233,18 @@ export function lz4DecompressBlock(
     if (litLen === 15) {
       let b: number
       do {
+        if (ip >= input.length) throw new Error('LZ4: unexpected end of input reading literal length')
         b = input[ip++]
         litLen += b
       } while (b === 255)
+    }
+
+    // Bounds check before copying literals
+    if (ip + litLen > input.length) {
+      throw new Error('LZ4: literal length exceeds input bounds')
+    }
+    if (op + litLen > uncompressedSize) {
+      throw new Error('LZ4: literal would overflow output buffer')
     }
 
     // Copy literals
@@ -239,7 +255,10 @@ export function lz4DecompressBlock(
     if (op >= uncompressedSize) break
     if (ip >= input.length) break
 
-    // Match offset
+    // Match offset — bounds check
+    if (ip + 1 >= input.length) {
+      throw new Error('LZ4: unexpected end of input reading match offset')
+    }
     const offset = input[ip] | (input[ip + 1] << 8)
     ip += 2
 
@@ -250,15 +269,28 @@ export function lz4DecompressBlock(
     if ((token & 0x0f) === 15) {
       let b: number
       do {
+        if (ip >= input.length) throw new Error('LZ4: unexpected end of input reading match length')
         b = input[ip++]
         matchLen += b
       } while (b === 255)
     }
 
-    // Copy match (may overlap)
+    if (op - offset < 0) {
+      throw new Error('LZ4: match offset points before output start')
+    }
+    if (op + matchLen > uncompressedSize) {
+      throw new Error('LZ4: match would overflow output buffer')
+    }
+
+    // Copy match — use fast copyWithin for non-overlapping cases
     let matchPos = op - offset
-    for (let i = 0; i < matchLen; i++) {
-      output[op++] = output[matchPos++]
+    if (offset >= matchLen) {
+      output.copyWithin(op, matchPos, matchPos + matchLen)
+      op += matchLen
+    } else {
+      for (let i = 0; i < matchLen; i++) {
+        output[op++] = output[matchPos++]
+      }
     }
   }
 

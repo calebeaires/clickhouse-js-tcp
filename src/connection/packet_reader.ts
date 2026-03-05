@@ -33,8 +33,13 @@ export type ServerPacket =
  * Note: This is a simplified synchronous parser that works on complete buffers.
  * For production streaming use, you'd add incremental buffering.
  */
+const MAX_BUFFER_SIZE = 268_435_456 // 256MB — prevent unbounded buffer growth
+const INITIAL_BUF_SIZE = 65_536 // 64KB — matches typical TCP chunk size
+
 export class PacketReader {
-  private buffer: Buffer = Buffer.alloc(0)
+  private buf: Buffer = Buffer.allocUnsafe(INITIAL_BUF_SIZE)
+  private readPos = 0
+  private writePos = 0
   private _decompress = false
 
   set decompress(value: boolean) {
@@ -42,11 +47,39 @@ export class PacketReader {
   }
 
   feed(data: Buffer): void {
-    this.buffer = Buffer.concat([this.buffer, data])
+    const needed = this.writePos + data.length
+    if (needed - this.readPos > MAX_BUFFER_SIZE) {
+      throw new Error(
+        `PacketReader buffer size ${needed - this.readPos} exceeds maximum ${MAX_BUFFER_SIZE}`,
+      )
+    }
+    if (needed > this.buf.length) {
+      // Try compacting first (shift unread data to front)
+      if (this.readPos > 0) {
+        this.buf.copyWithin(0, this.readPos, this.writePos)
+        this.writePos -= this.readPos
+        this.readPos = 0
+      }
+      // If still not enough, grow the buffer
+      if (this.writePos + data.length > this.buf.length) {
+        let newSize = this.buf.length * 2
+        while (newSize < this.writePos + data.length) newSize *= 2
+        const next = Buffer.allocUnsafe(newSize)
+        this.buf.copy(next, 0, 0, this.writePos)
+        this.buf = next
+      }
+    }
+    data.copy(this.buf, this.writePos)
+    this.writePos += data.length
   }
 
   get bufferedLength(): number {
-    return this.buffer.length
+    return this.writePos - this.readPos
+  }
+
+  private clearBuffer(): void {
+    this.readPos = 0
+    this.writePos = 0
   }
 
   /**
@@ -54,9 +87,11 @@ export class PacketReader {
    * Returns null if not enough data yet.
    */
   tryReadPacket(): ServerPacket | null {
-    if (this.buffer.length === 0) return null
+    if (this.writePos === this.readPos) return null
 
-    const reader = new BinaryReader(this.buffer)
+    // Snapshot the active buffer region once
+    const buffer = this.buf.subarray(this.readPos, this.writePos)
+    const reader = new BinaryReader(buffer)
 
     try {
       const packetType = reader.readVarUInt() as ServerPacketType
@@ -105,19 +140,22 @@ export class PacketReader {
           if (this._decompress) {
             // Compressed block: checksum(16) + header(9) + compressed_data
             // The entire block header + column data is inside the compressed payload
-            const compressedBuf = this.buffer.subarray(reader.offset)
+            const compressedBuf = buffer.subarray(reader.offset)
             if (compressedBuf.length < 25) {
               // Need at least checksum(16) + method(1) + sizes(8)
               return null
             }
             const compressedSize = compressedBuf.readUInt32LE(17) // offset 16+1
+            if (compressedSize > Number.MAX_SAFE_INTEGER - 16) {
+              throw new Error(`Compressed block size ${compressedSize} would overflow`)
+            }
             const totalBlockSize = 16 + compressedSize
             if (compressedBuf.length < totalBlockSize) {
               return null // not enough data yet
             }
             const { data: decompressed, bytesRead } = decompressBlock(compressedBuf, 0)
             const afterBlock = Buffer.from(compressedBuf.subarray(bytesRead))
-            this.buffer = Buffer.alloc(0)
+            this.clearBuffer()
 
             const blockReader = new BinaryReader(decompressed)
             const header = readBlockHeader(blockReader)
@@ -139,9 +177,9 @@ export class PacketReader {
           // Copy remaining bytes into a new buffer for the rawReader.
           // The caller reads column data from rawReader, then feeds back
           // any unconsumed bytes via consumeFromReader/feed.
-          const remaining = Buffer.from(this.buffer.subarray(reader.offset))
+          const remaining = Buffer.from(buffer.subarray(reader.offset))
           // Consume entire buffer — leftover will be fed back by the caller.
-          this.buffer = Buffer.alloc(0)
+          this.clearBuffer()
           return {
             type: packetType,
             data: {
@@ -167,14 +205,17 @@ export class PacketReader {
           const tempTable = reader.readString()
 
           if (this._decompress) {
-            const compressedBuf = this.buffer.subarray(reader.offset)
+            const compressedBuf = buffer.subarray(reader.offset)
             if (compressedBuf.length < 25) return null
             const compressedSize = compressedBuf.readUInt32LE(17)
+            if (compressedSize > Number.MAX_SAFE_INTEGER - 16) {
+              throw new Error(`Compressed block size ${compressedSize} would overflow`)
+            }
             const totalBlockSize = 16 + compressedSize
             if (compressedBuf.length < totalBlockSize) return null
             const { data: decompressed, bytesRead } = decompressBlock(compressedBuf, 0)
             const afterBlock = Buffer.from(compressedBuf.subarray(bytesRead))
-            this.buffer = Buffer.alloc(0)
+            this.clearBuffer()
             const blockReader = new BinaryReader(decompressed)
             const header = readBlockHeader(blockReader)
             const columnData = Buffer.from(decompressed.subarray(blockReader.offset))
@@ -186,8 +227,8 @@ export class PacketReader {
           }
 
           const header = readBlockHeader(reader)
-          const remaining = Buffer.from(this.buffer.subarray(reader.offset))
-          this.buffer = Buffer.alloc(0)
+          const remaining = Buffer.from(buffer.subarray(reader.offset))
+          this.clearBuffer()
           return {
             type: ServerPacketType.ProfileEvents,
             data: {
@@ -214,17 +255,24 @@ export class PacketReader {
   }
 
   private consume(bytes: number): void {
-    this.buffer = this.buffer.subarray(bytes)
+    this.readPos += bytes
+    if (this.readPos === this.writePos) {
+      // Buffer fully consumed — reset positions
+      this.readPos = 0
+      this.writePos = 0
+    }
   }
 
   /** Take the accumulated buffer and reset it. */
   drainBuffer(): Buffer {
-    const buf = this.buffer
-    this.buffer = Buffer.alloc(0)
-    return buf
+    const result = Buffer.from(this.buf.subarray(this.readPos, this.writePos))
+    this.readPos = 0
+    this.writePos = 0
+    return result
   }
 
   reset(): void {
-    this.buffer = Buffer.alloc(0)
+    this.readPos = 0
+    this.writePos = 0
   }
 }

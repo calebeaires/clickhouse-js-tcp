@@ -106,14 +106,25 @@ export class BinaryWriter {
   }
 
   writeVarUInt(value: number | bigint): void {
-    let v = typeof value === 'bigint' ? value : BigInt(value)
-    // Ensure enough space for worst case (10 bytes for 64-bit varint)
-    this.ensure(10)
-    while (v >= 0x80n) {
-      this.buf[this.pos++] = Number(v & 0x7fn) | 0x80
-      v >>= 7n
+    if (typeof value === 'number') {
+      // Fast path for number values (99%+ of calls)
+      this.ensure(5)
+      let v = value
+      while (v >= 0x80) {
+        this.buf[this.pos++] = (v & 0x7f) | 0x80
+        v >>>= 7
+      }
+      this.buf[this.pos++] = v
+      return
     }
-    this.buf[this.pos++] = Number(v)
+    // BigInt fallback (rare: Int128/Int256)
+    this.ensure(10)
+    let bv = value
+    while (bv >= 0x80n) {
+      this.buf[this.pos++] = Number(bv & 0x7fn) | 0x80
+      bv >>= 7n
+    }
+    this.buf[this.pos++] = Number(bv)
   }
 
   writeString(value: string): void {
