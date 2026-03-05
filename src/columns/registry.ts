@@ -1,14 +1,28 @@
 import type { ColumnCodec, ParsedType } from './column'
 import { parseType, parseEnumEntries } from './type_parser'
 import {
-  UInt8Codec, UInt16Codec, UInt32Codec, UInt64Codec,
-  Int8Codec, Int16Codec, Int32Codec, Int64Codec,
-  Int128Codec, UInt128Codec, Int256Codec, UInt256Codec,
+  UInt8Codec,
+  UInt16Codec,
+  UInt32Codec,
+  UInt64Codec,
+  Int8Codec,
+  Int16Codec,
+  Int32Codec,
+  Int64Codec,
+  Int128Codec,
+  UInt128Codec,
+  Int256Codec,
+  UInt256Codec,
 } from './int'
 import { Float32Codec, Float64Codec } from './float'
 import { BoolCodec } from './bool'
 import { StringCodec, FixedStringCodec } from './string'
-import { DateCodec, Date32Codec, DateTimeCodec, DateTime64Codec } from './datetime'
+import {
+  DateCodec,
+  Date32Codec,
+  DateTimeCodec,
+  DateTime64Codec,
+} from './datetime'
 import { Enum8Codec, Enum16Codec } from './enum'
 import { NullableCodec } from './nullable'
 import { ArrayCodec } from './array'
@@ -59,7 +73,11 @@ export function getCodec(typeStr: string): ColumnCodec {
 function buildCodec(parsed: ParsedType): ColumnCodec {
   // Check simple types first
   const simpleFactory = simpleCodecs[parsed.name]
-  if (simpleFactory && parsed.params.length === 0 && parsed.innerTypes.length === 0) {
+  if (
+    simpleFactory &&
+    parsed.params.length === 0 &&
+    parsed.innerTypes.length === 0
+  ) {
     return simpleFactory()
   }
 
@@ -76,9 +94,10 @@ function buildCodec(parsed: ParsedType): ColumnCodec {
 
     case 'DateTime64': {
       const precision = parseInt(parsed.params[0], 10)
-      const tz = parsed.params.length > 1
-        ? parsed.params[1].replace(/'/g, '').trim()
-        : undefined
+      const tz =
+        parsed.params.length > 1
+          ? parsed.params[1].replace(/'/g, '').trim()
+          : undefined
       return new DateTime64Codec(precision, tz)
     }
 

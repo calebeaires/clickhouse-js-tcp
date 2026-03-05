@@ -1,5 +1,5 @@
-import { BinaryReader } from '../protocol/binary_reader'
-import { BinaryWriter } from '../protocol/binary_writer'
+import type { BinaryReader } from '../protocol/binary_reader'
+import type { BinaryWriter } from '../protocol/binary_writer'
 
 export interface ColumnReader {
   read(reader: BinaryReader, rows: number): unknown[]

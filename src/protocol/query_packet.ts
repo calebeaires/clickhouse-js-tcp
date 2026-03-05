@@ -1,4 +1,4 @@
-import { BinaryWriter } from './binary_writer'
+import type { BinaryWriter } from './binary_writer'
 import {
   ClientPacketType,
   PROTOCOL_VERSION,

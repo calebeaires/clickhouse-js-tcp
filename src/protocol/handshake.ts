@@ -1,5 +1,5 @@
-import { BinaryReader } from './binary_reader'
-import { BinaryWriter } from './binary_writer'
+import type { BinaryReader } from './binary_reader'
+import type { BinaryWriter } from './binary_writer'
 import {
   CLIENT_NAME,
   CLIENT_VERSION_MAJOR,
@@ -95,7 +95,17 @@ export function readServerHello(reader: BinaryReader): ServerHello {
   }
 }
 
-export function readServerException(reader: BinaryReader): ServerException {
+const MAX_EXCEPTION_DEPTH = 100
+
+export function readServerException(
+  reader: BinaryReader,
+  depth = 0,
+): ServerException {
+  if (depth > MAX_EXCEPTION_DEPTH) {
+    throw new Error(
+      `Nested exception depth ${depth} exceeds maximum ${MAX_EXCEPTION_DEPTH}`,
+    )
+  }
   const code = reader.readInt32()
   const name = reader.readString()
   const message = reader.readString()
@@ -104,7 +114,7 @@ export function readServerException(reader: BinaryReader): ServerException {
 
   const exception: ServerException = { code, name, message, stackTrace }
   if (hasNested) {
-    exception.nested = readServerException(reader)
+    exception.nested = readServerException(reader, depth + 1)
   }
   return exception
 }

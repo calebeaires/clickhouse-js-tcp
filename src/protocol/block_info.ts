@@ -1,5 +1,5 @@
-import { BinaryReader } from './binary_reader'
-import { BinaryWriter } from './binary_writer'
+import type { BinaryReader } from './binary_reader'
+import type { BinaryWriter } from './binary_writer'
 
 export interface BlockInfo {
   isOverflows: boolean
@@ -17,11 +17,13 @@ export function writeBlockInfo(writer: BinaryWriter, info?: BlockInfo): void {
   writer.writeVarUInt(0)
 }
 
+const MAX_BLOCK_INFO_FIELDS = 100
+
 export function readBlockInfo(reader: BinaryReader): BlockInfo {
   let isOverflows = false
   let bucketNum = -1
 
-  while (true) {
+  for (let iter = 0; iter < MAX_BLOCK_INFO_FIELDS; iter++) {
     const fieldNum = reader.readVarUInt()
     if (fieldNum === 0) break
     switch (fieldNum) {
@@ -33,6 +35,11 @@ export function readBlockInfo(reader: BinaryReader): BlockInfo {
         break
       default:
         throw new Error(`Unknown BlockInfo field: ${fieldNum}`)
+    }
+    if (iter === MAX_BLOCK_INFO_FIELDS - 1) {
+      throw new Error(
+        `BlockInfo field count exceeds maximum ${MAX_BLOCK_INFO_FIELDS}`,
+      )
     }
   }
 

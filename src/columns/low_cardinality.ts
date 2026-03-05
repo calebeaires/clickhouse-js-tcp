@@ -97,7 +97,8 @@ export class LowCardinalityCodec implements ColumnCodec {
     else if (index.length <= 4294967296) keyType = KeyUInt32
     else keyType = KeyUInt64
 
-    const serializationType = keyType | HasAdditionalKeysBit | NeedUpdateDictionary
+    const serializationType =
+      keyType | HasAdditionalKeysBit | NeedUpdateDictionary
 
     // Write serialization type
     writer.writeInt64(BigInt(serializationType))

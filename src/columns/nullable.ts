@@ -5,7 +5,7 @@ import type { BinaryWriter } from '../protocol/binary_writer'
 export class NullableCodec implements ColumnCodec {
   constructor(private readonly inner: ColumnCodec) {}
 
-  read(reader: BinaryReader, rows: number): (unknown | null)[] {
+  read(reader: BinaryReader, rows: number): unknown[] {
     // Read nulls mask (UInt8 per row)
     const nulls = new Array<boolean>(rows)
     for (let i = 0; i < rows; i++) nulls[i] = reader.readUInt8() !== 0
@@ -14,7 +14,7 @@ export class NullableCodec implements ColumnCodec {
     const values = this.inner.read(reader, rows)
 
     // Apply nulls
-    const result = new Array<unknown | null>(rows)
+    const result = new Array<unknown>(rows)
     for (let i = 0; i < rows; i++) {
       result[i] = nulls[i] ? null : values[i]
     }

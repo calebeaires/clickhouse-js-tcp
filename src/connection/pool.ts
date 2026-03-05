@@ -1,5 +1,6 @@
 import type { ConnectionParams } from '@clickhouse/client-common'
-import { TcpConnection, TcpConnectionExtra } from './tcp_connection'
+import type { TcpConnectionExtra } from './tcp_connection'
+import { TcpConnection } from './tcp_connection'
 
 interface Waiter {
   resolve: (conn: TcpConnection) => void

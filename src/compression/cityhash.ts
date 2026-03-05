@@ -151,7 +151,12 @@ function cityHash128WithSeed(
     x = toU64(mul64(toU64(x + v1), k1) + w0)
     z = toU64(z + fetch64(buf, idx + 8))
     w0 = toU64(w0 + fetch64(buf, idx + 16))
-    ;[v0, v1] = weakHashLen32WithSeedsBuf(buf, idx, toU64(v0 + z), toU64(v1 + w))
+    ;[v0, v1] = weakHashLen32WithSeedsBuf(
+      buf,
+      idx,
+      toU64(v0 + z),
+      toU64(v1 + w),
+    )
     v0 = mul64(v0, 5n)
   }
 
@@ -161,10 +166,12 @@ function cityHash128WithSeed(
   y = toU64(shiftMix(toU64(y + v1 + fetch64(buf, end - 24))) * k0)
 
   const lo = toU64(hash128to64(x, y) + toU64(shiftMix(w0) * 9n) + z)
-  const hi = toU64(hash128to64(
-    toU64(x + fetch64(buf, end - 16)),
-    toU64(y + fetch64(buf, end - 8)),
-  ) + toU64(shiftMix(toU64(w0 + z)) * 9n))
+  const hi = toU64(
+    hash128to64(
+      toU64(x + fetch64(buf, end - 16)),
+      toU64(y + fetch64(buf, end - 8)),
+    ) + toU64(shiftMix(toU64(w0 + z)) * 9n),
+  )
 
   return [lo, hi]
 }
@@ -235,7 +242,7 @@ function hashLen0to16(buf: Buffer, offset: number, len: number): bigint {
     const c = buf[offset + len - 1]
     const y = BigInt(a) + (BigInt(b) << 8n)
     const z = BigInt(len) + (BigInt(c) << 2n)
-    return toU64(shiftMix(toU64(y * k2 ^ z * k0)) * k2)
+    return toU64(shiftMix(toU64((y * k2) ^ (z * k0))) * k2)
   }
   return k2
 }
@@ -253,7 +260,11 @@ function hashLen16(u: bigint, v: bigint, mul: bigint): bigint {
  * Compute CityHash128 of the given buffer (or sub-range).
  * Returns [lo, hi] as two bigints (UInt64 each).
  */
-export function cityHash128(buf: Buffer, offset = 0, length?: number): [bigint, bigint] {
+export function cityHash128(
+  buf: Buffer,
+  offset = 0,
+  length?: number,
+): [bigint, bigint] {
   const len = length ?? buf.length - offset
 
   if (len <= 16) {

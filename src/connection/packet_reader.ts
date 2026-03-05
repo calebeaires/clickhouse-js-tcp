@@ -1,24 +1,24 @@
 import { BinaryReader } from '../protocol/binary_reader'
 import { ServerPacketType } from '../protocol/packet_types'
-import {
-  readServerHello,
-  readServerException,
-  ServerHello,
-  ServerException,
-} from '../protocol/handshake'
-import { readBlockHeader, BlockHeader } from '../protocol/data_packet'
-import {
-  readProgress,
-  readProfileInfo,
+import type { ServerHello, ServerException } from '../protocol/handshake'
+import { readServerHello, readServerException } from '../protocol/handshake'
+import type { BlockHeader } from '../protocol/data_packet'
+import { readBlockHeader } from '../protocol/data_packet'
+import type {
   ProgressPacket,
   ProfileInfoPacket,
 } from '../protocol/server_packets'
+import { readProgress, readProfileInfo } from '../protocol/server_packets'
 import { decompressBlock } from '../compression/lz4'
 
 export type ServerPacket =
   | { type: ServerPacketType.Hello; data: ServerHello }
   | {
-      type: ServerPacketType.Data | ServerPacketType.Totals | ServerPacketType.Extremes | ServerPacketType.ProfileEvents
+      type:
+        | ServerPacketType.Data
+        | ServerPacketType.Totals
+        | ServerPacketType.Extremes
+        | ServerPacketType.ProfileEvents
       data: { tempTable: string; header: BlockHeader; rawReader: BinaryReader }
     }
   | { type: ServerPacketType.Exception; data: ServerException }
@@ -26,7 +26,10 @@ export type ServerPacket =
   | { type: ServerPacketType.Pong }
   | { type: ServerPacketType.EndOfStream }
   | { type: ServerPacketType.ProfileInfo; data: ProfileInfoPacket }
-  | { type: ServerPacketType.TableColumns; data: { tempTable: string; columns: string } }
+  | {
+      type: ServerPacketType.TableColumns
+      data: { tempTable: string; columns: string }
+    }
 
 /**
  * Accumulates data from the socket and decodes server packets.
@@ -147,20 +150,27 @@ export class PacketReader {
             }
             const compressedSize = compressedBuf.readUInt32LE(17) // offset 16+1
             if (compressedSize > Number.MAX_SAFE_INTEGER - 16) {
-              throw new Error(`Compressed block size ${compressedSize} would overflow`)
+              throw new Error(
+                `Compressed block size ${compressedSize} would overflow`,
+              )
             }
             const totalBlockSize = 16 + compressedSize
             if (compressedBuf.length < totalBlockSize) {
               return null // not enough data yet
             }
-            const { data: decompressed, bytesRead } = decompressBlock(compressedBuf, 0)
+            const { data: decompressed, bytesRead } = decompressBlock(
+              compressedBuf,
+              0,
+            )
             const afterBlock = Buffer.from(compressedBuf.subarray(bytesRead))
             this.clearBuffer()
 
             const blockReader = new BinaryReader(decompressed)
             const header = readBlockHeader(blockReader)
             // Remaining decompressed data = column data
-            const columnData = Buffer.from(decompressed.subarray(blockReader.offset))
+            const columnData = Buffer.from(
+              decompressed.subarray(blockReader.offset),
+            )
             // Combine column data remainder with afterBlock
             const combined = Buffer.concat([columnData, afterBlock])
             return {
@@ -209,20 +219,31 @@ export class PacketReader {
             if (compressedBuf.length < 25) return null
             const compressedSize = compressedBuf.readUInt32LE(17)
             if (compressedSize > Number.MAX_SAFE_INTEGER - 16) {
-              throw new Error(`Compressed block size ${compressedSize} would overflow`)
+              throw new Error(
+                `Compressed block size ${compressedSize} would overflow`,
+              )
             }
             const totalBlockSize = 16 + compressedSize
             if (compressedBuf.length < totalBlockSize) return null
-            const { data: decompressed, bytesRead } = decompressBlock(compressedBuf, 0)
+            const { data: decompressed, bytesRead } = decompressBlock(
+              compressedBuf,
+              0,
+            )
             const afterBlock = Buffer.from(compressedBuf.subarray(bytesRead))
             this.clearBuffer()
             const blockReader = new BinaryReader(decompressed)
             const header = readBlockHeader(blockReader)
-            const columnData = Buffer.from(decompressed.subarray(blockReader.offset))
+            const columnData = Buffer.from(
+              decompressed.subarray(blockReader.offset),
+            )
             const combined = Buffer.concat([columnData, afterBlock])
             return {
               type: ServerPacketType.ProfileEvents,
-              data: { tempTable, header, rawReader: new BinaryReader(combined) },
+              data: {
+                tempTable,
+                header,
+                rawReader: new BinaryReader(combined),
+              },
             }
           }
 
@@ -243,10 +264,7 @@ export class PacketReader {
           throw new Error(`Unknown server packet type: ${packetType}`)
       }
     } catch (e) {
-      if (
-        e instanceof Error &&
-        e.message.startsWith('Not enough data')
-      ) {
+      if (e instanceof Error && e.message.startsWith('Not enough data')) {
         // Not enough data accumulated yet — wait for more
         return null
       }

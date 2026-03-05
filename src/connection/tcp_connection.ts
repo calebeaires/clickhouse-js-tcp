@@ -14,11 +14,12 @@ import type {
   ConnectionParams,
 } from '@clickhouse/client-common'
 import { SocketManager } from './socket_manager'
-import { PacketReader, ServerPacket } from './packet_reader'
+import type { ServerPacket } from './packet_reader'
+import { PacketReader } from './packet_reader'
 import { PacketWriter } from './packet_writer'
 import { ServerPacketType } from '../protocol/packet_types'
-import { ServerException } from '../protocol/handshake'
-import { Block, ColumnData } from '../protocol/data_packet'
+import type { ServerException } from '../protocol/handshake'
+import type { Block, ColumnData } from '../protocol/data_packet'
 import { getCodec } from '../columns/registry'
 import { BinaryReader } from '../protocol/binary_reader'
 import { blockToRows } from '../utils/block_to_rows'
@@ -74,9 +75,10 @@ export class TcpConnection implements Connection<Stream.Readable> {
     const password = auth.type === 'Credentials' ? auth.password : ''
 
     if (password && !this.extra.tls) {
+      // eslint-disable-next-line no-console
       console.warn(
         'WARNING: ClickHouse credentials are being sent without TLS. ' +
-        'Consider using TLS (tcps://) to encrypt the connection.',
+          'Consider using TLS (tcps://) to encrypt the connection.',
       )
     }
 
@@ -110,6 +112,7 @@ export class TcpConnection implements Connection<Stream.Readable> {
     this.connected = true
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async ping(_params?: ConnPingParams): Promise<ConnPingResult> {
     try {
       await this.ensureConnected()
@@ -124,11 +127,15 @@ export class TcpConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async query(params: ConnBaseQueryParams): Promise<ConnQueryResult<Stream.Readable>> {
+  async query(
+    params: ConnBaseQueryParams,
+  ): Promise<ConnQueryResult<Stream.Readable>> {
     return this.withRetry(() => this._query(params))
   }
 
-  private async _query(params: ConnBaseQueryParams): Promise<ConnQueryResult<Stream.Readable>> {
+  private async _query(
+    params: ConnBaseQueryParams,
+  ): Promise<ConnQueryResult<Stream.Readable>> {
     await this.ensureConnected()
     this.checkAborted(params.abort_signal)
     this.lastUsed = Date.now()
@@ -146,7 +153,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
       database: this.params.database,
       username,
       compression: useCompression,
-      settings: params.clickhouse_settings as Record<string, string | number | boolean> | undefined,
+      settings: params.clickhouse_settings as
+        | Record<string, string | number | boolean>
+        | undefined,
     })
 
     const blocks: Block[] = []
@@ -167,7 +176,11 @@ export class TcpConnection implements Connection<Stream.Readable> {
         case ServerPacketType.Extremes: {
           const { header, rawReader } = packet.data
           if (header.numRows > 0 && header.numColumns > 0) {
-            const block = await this.readBlockColumns(rawReader, header.numColumns, header.numRows)
+            const block = await this.readBlockColumns(
+              rawReader,
+              header.numColumns,
+              header.numRows,
+            )
             blocks.push(block)
           } else if (header.numColumns > 0) {
             await this.skipBlockColumns(rawReader, header.numColumns, 0)
@@ -212,11 +225,15 @@ export class TcpConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async insert(params: ConnInsertParams<Stream.Readable>): Promise<ConnInsertResult> {
+  async insert(
+    params: ConnInsertParams<Stream.Readable>,
+  ): Promise<ConnInsertResult> {
     return this.withRetry(() => this._insert(params))
   }
 
-  private async _insert(params: ConnInsertParams<Stream.Readable>): Promise<ConnInsertResult> {
+  private async _insert(
+    params: ConnInsertParams<Stream.Readable>,
+  ): Promise<ConnInsertResult> {
     await this.ensureConnected()
     this.checkAborted(params.abort_signal)
     this.lastUsed = Date.now()
@@ -236,7 +253,7 @@ export class TcpConnection implements Connection<Stream.Readable> {
     })
 
     // Read schema block from server
-    let schemaColumns: Array<{ name: string; type: string }> = []
+    const schemaColumns: Array<{ name: string; type: string }> = []
 
     while (true) {
       const packet = await this.waitForPacketWithAbort(params.abort_signal)
@@ -250,9 +267,7 @@ export class TcpConnection implements Connection<Stream.Readable> {
         continue
       }
 
-      if (
-        packet.type === ServerPacketType.Data
-      ) {
+      if (packet.type === ServerPacketType.Data) {
         const { header, rawReader } = packet.data
         // This is the schema block — read column names and types
         for (let i = 0; i < header.numColumns; i++) {
@@ -284,7 +299,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
       const BATCH_SIZE = 10000
       let batch: Record<string, unknown>[] = []
       for await (const chunk of params.values) {
-        const rows = typeof chunk === 'string' ? JSON.parse(chunk) : chunk
+        const rows = (typeof chunk === 'string' ? JSON.parse(chunk) : chunk) as
+          | Record<string, unknown>
+          | Record<string, unknown>[]
         if (Array.isArray(rows)) {
           batch.push(...rows)
         } else {
@@ -337,11 +354,15 @@ export class TcpConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async command(params: ConnBaseQueryParams & { ignore_error_response?: boolean }): Promise<ConnCommandResult> {
+  async command(
+    params: ConnBaseQueryParams & { ignore_error_response?: boolean },
+  ): Promise<ConnCommandResult> {
     return this.withRetry(() => this._command(params))
   }
 
-  private async _command(params: ConnBaseQueryParams & { ignore_error_response?: boolean }): Promise<ConnCommandResult> {
+  private async _command(
+    params: ConnBaseQueryParams & { ignore_error_response?: boolean },
+  ): Promise<ConnCommandResult> {
     await this.ensureConnected()
     this.checkAborted(params.abort_signal)
     this.lastUsed = Date.now()
@@ -356,7 +377,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
       database: this.params.database,
       username,
       compression: false,
-      settings: params.clickhouse_settings as Record<string, string | number | boolean> | undefined,
+      settings: params.clickhouse_settings as
+        | Record<string, string | number | boolean>
+        | undefined,
     })
 
     while (true) {
@@ -388,7 +411,11 @@ export class TcpConnection implements Connection<Stream.Readable> {
       ) {
         const { header, rawReader } = packet.data
         if (header.numRows > 0 && header.numColumns > 0) {
-          await this.skipBlockColumns(rawReader, header.numColumns, header.numRows)
+          await this.skipBlockColumns(
+            rawReader,
+            header.numColumns,
+            header.numRows,
+          )
         } else if (header.numColumns > 0) {
           await this.skipBlockColumns(rawReader, header.numColumns, 0)
         } else {
@@ -398,7 +425,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async exec(params: ConnExecParams<Stream.Readable>): Promise<ConnExecResult<Stream.Readable>> {
+  async exec(
+    params: ConnExecParams<Stream.Readable>,
+  ): Promise<ConnExecResult<Stream.Readable>> {
     const result = await this.query(params)
     return {
       ...result,
@@ -427,7 +456,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
     const host = url.hostname || 'localhost'
     const parsedPort = parseInt(url.port, 10) || 9000
     if (parsedPort < 1 || parsedPort > 65535) {
-      throw new Error(`Invalid port number: ${parsedPort}. Must be between 1 and 65535`)
+      throw new Error(
+        `Invalid port number: ${parsedPort}. Must be between 1 and 65535`,
+      )
     }
     const port = parsedPort
     return new SocketManager({
@@ -444,6 +475,7 @@ export class TcpConnection implements Connection<Stream.Readable> {
     })
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   private async resetConnection(): Promise<void> {
     this.connected = false
     this.packetReader.reset()
@@ -469,7 +501,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
     }
   }
 
-  private async waitForPacketWithAbort(signal?: AbortSignal): Promise<ServerPacket> {
+  private async waitForPacketWithAbort(
+    signal?: AbortSignal,
+  ): Promise<ServerPacket> {
     if (!signal) return this.waitForPacket()
 
     return new Promise<ServerPacket>((resolve, reject) => {
@@ -495,9 +529,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
           signal.removeEventListener('abort', onAbort)
           resolve(packet)
         },
-        (err) => {
+        (err: unknown) => {
           signal.removeEventListener('abort', onAbort)
-          reject(err)
+          reject(err instanceof Error ? err : new Error(String(err)))
         },
       )
     })
@@ -691,7 +725,7 @@ export class TcpConnection implements Connection<Stream.Readable> {
       message += `\nCaused by: ${ex.nested.message}`
     }
     const err = new Error(message)
-    ;(err as any).code = ex.code
+    ;(err as unknown as Record<string, unknown>).code = ex.code
     return err
   }
 }

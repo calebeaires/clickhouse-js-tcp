@@ -2,16 +2,29 @@ import type { ColumnCodec } from './column'
 import type { BinaryReader } from '../protocol/binary_reader'
 import type { BinaryWriter } from '../protocol/binary_writer'
 
+const MAX_ARRAY_ELEMENTS = 100_000_000 // 100M — prevent OOM from malicious offsets
+
 export class ArrayCodec implements ColumnCodec {
   constructor(private readonly inner: ColumnCodec) {}
 
   read(reader: BinaryReader, rows: number): unknown[][] {
     // Read offsets (UInt64 per row)
     const offsets = new Array<number>(rows)
-    for (let i = 0; i < rows; i++) offsets[i] = Number(reader.readUInt64())
+    for (let i = 0; i < rows; i++) {
+      const raw = reader.readUInt64()
+      if (raw > BigInt(Number.MAX_SAFE_INTEGER)) {
+        throw new Error(`Array offset ${raw} exceeds Number.MAX_SAFE_INTEGER`)
+      }
+      offsets[i] = Number(raw)
+    }
 
     // Total elements = last offset (or 0)
     const totalElements = rows > 0 ? offsets[rows - 1] : 0
+    if (totalElements > MAX_ARRAY_ELEMENTS) {
+      throw new Error(
+        `Array total elements ${totalElements} exceeds maximum ${MAX_ARRAY_ELEMENTS}`,
+      )
+    }
 
     // Read all element data
     const allData = this.inner.read(reader, totalElements)

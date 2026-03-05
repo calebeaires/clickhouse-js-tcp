@@ -1,3 +1,5 @@
+const MAX_STRING_SIZE = 67_108_864 // 64MB — prevent unbounded string allocation
+
 export class BinaryReader {
   private buf: Buffer
   private pos: number
@@ -161,6 +163,11 @@ export class BinaryReader {
   readString(): string {
     const len = this.readVarUInt()
     if (len === 0) return ''
+    if (len > MAX_STRING_SIZE) {
+      throw new Error(
+        `String size ${len} exceeds maximum allowed ${MAX_STRING_SIZE}`,
+      )
+    }
     this.assertAvailable(len)
     const s = this.buf.toString('utf-8', this.pos, this.pos + len)
     this.pos += len

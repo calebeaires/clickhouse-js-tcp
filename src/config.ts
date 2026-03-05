@@ -1,24 +1,25 @@
-import * as Stream from 'stream'
+import type * as Stream from 'stream'
 import type {
   BaseClickHouseClientConfigOptions,
   ImplementationDetails,
   ConnectionParams,
   ResponseHeaders,
+  DataFormat,
 } from '@clickhouse/client-common'
 import { TcpConnectionPool } from './connection/pool'
 import { PooledConnection } from './connection/pooled_connection'
 import { TcpValuesEncoder } from './utils/encoder'
 import { TcpResultSet } from './result_set'
 
-export type TcpClickHouseClientConfigOptions = BaseClickHouseClientConfigOptions & {
-  tls?: {
-    ca_cert?: Buffer | string
-    cert?: Buffer | string
-    key?: Buffer | string
+export type TcpClickHouseClientConfigOptions =
+  BaseClickHouseClientConfigOptions & {
+    tls?: {
+      ca_cert?: Buffer | string
+      cert?: Buffer | string
+      key?: Buffer | string
+    }
   }
-}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const TcpImpl: ImplementationDetails<Stream.Readable>['impl'] = {
   make_connection: (
     _config: BaseClickHouseClientConfigOptions,
@@ -39,6 +40,7 @@ export const TcpImpl: ImplementationDetails<Stream.Readable>['impl'] = {
 
   values_encoder: () => new TcpValuesEncoder(),
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   make_result_set: ((
     stream: Stream.Readable,
     format: string,
@@ -46,16 +48,14 @@ export const TcpImpl: ImplementationDetails<Stream.Readable>['impl'] = {
     log_error: (err: Error) => void,
     response_headers: ResponseHeaders,
     json: unknown,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ): any => {
     return TcpResultSet.instance({
       stream,
-      format,
+      format: format as DataFormat,
       query_id,
       log_error,
       response_headers,
       json,
     })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }) as any,
 }

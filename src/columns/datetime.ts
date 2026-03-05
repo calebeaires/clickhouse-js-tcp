@@ -89,7 +89,7 @@ export class DateTime64Codec implements ColumnCodec {
     const result = new Array<string>(rows)
     for (let i = 0; i < rows; i++) {
       const ticks = reader.readInt64()
-      const ms = Number(ticks * 1000n / this.scale)
+      const ms = Number((ticks * 1000n) / this.scale)
       const date = new Date(ms)
       result[i] = date.toISOString().replace('T', ' ').replace('Z', '')
     }
@@ -106,7 +106,7 @@ export class DateTime64Codec implements ColumnCodec {
       } else {
         ms = v as number
       }
-      const ticks = BigInt(ms) * this.scale / 1000n
+      const ticks = (BigInt(ms) * this.scale) / 1000n
       writer.writeInt64(ticks)
     }
   }

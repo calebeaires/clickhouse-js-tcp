@@ -1,4 +1,4 @@
-import * as Stream from 'stream'
+import type * as Stream from 'stream'
 import type {
   Connection,
   ConnPingParams,
@@ -11,7 +11,7 @@ import type {
   ConnExecParams,
   ConnExecResult,
 } from '@clickhouse/client-common'
-import { TcpConnectionPool } from './pool'
+import type { TcpConnectionPool } from './pool'
 
 /**
  * A Connection wrapper that acquires a connection from the pool for each
@@ -33,7 +33,9 @@ export class PooledConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async query(params: ConnBaseQueryParams): Promise<ConnQueryResult<Stream.Readable>> {
+  async query(
+    params: ConnBaseQueryParams,
+  ): Promise<ConnQueryResult<Stream.Readable>> {
     const conn = await this.pool.acquire()
     try {
       const result = await conn.query(params)
@@ -57,7 +59,9 @@ export class PooledConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async insert(params: ConnInsertParams<Stream.Readable>): Promise<ConnInsertResult> {
+  async insert(
+    params: ConnInsertParams<Stream.Readable>,
+  ): Promise<ConnInsertResult> {
     const conn = await this.pool.acquire()
     try {
       const result = await conn.insert(params)
@@ -69,7 +73,9 @@ export class PooledConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async command(params: ConnBaseQueryParams & { ignore_error_response?: boolean }): Promise<ConnCommandResult> {
+  async command(
+    params: ConnBaseQueryParams & { ignore_error_response?: boolean },
+  ): Promise<ConnCommandResult> {
     const conn = await this.pool.acquire()
     try {
       const result = await conn.command(params)
@@ -81,7 +87,9 @@ export class PooledConnection implements Connection<Stream.Readable> {
     }
   }
 
-  async exec(params: ConnExecParams<Stream.Readable>): Promise<ConnExecResult<Stream.Readable>> {
+  async exec(
+    params: ConnExecParams<Stream.Readable>,
+  ): Promise<ConnExecResult<Stream.Readable>> {
     const conn = await this.pool.acquire()
     try {
       const result = await conn.exec(params)

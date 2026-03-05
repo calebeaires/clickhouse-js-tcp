@@ -1,4 +1,4 @@
-import * as Stream from 'stream'
-import { ClickHouseClient } from '@clickhouse/client-common'
+import type * as Stream from 'stream'
+import type { ClickHouseClient } from '@clickhouse/client-common'
 
 export type TcpClickHouseClient = ClickHouseClient<Stream.Readable>

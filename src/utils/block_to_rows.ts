@@ -1,8 +1,6 @@
 import type { Block } from '../protocol/data_packet'
 
-export function blockToRows(
-  blocks: Block[],
-): Record<string, unknown>[] {
+export function blockToRows(blocks: Block[]): Record<string, unknown>[] {
   const result: Record<string, unknown>[] = []
 
   for (const block of blocks) {
@@ -20,9 +18,7 @@ export function blockToRows(
   return result
 }
 
-export function blockToColumnar(
-  blocks: Block[],
-): Record<string, unknown[]> {
+export function blockToColumnar(blocks: Block[]): Record<string, unknown[]> {
   const result: Record<string, unknown[]> = {}
 
   for (const block of blocks) {

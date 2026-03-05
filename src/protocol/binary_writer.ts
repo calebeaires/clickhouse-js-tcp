@@ -72,7 +72,7 @@ export class BinaryWriter {
     this.ensure(16)
     // Little-endian: write low 8 bytes first, then high 8 bytes
     const mask64 = (1n << 64n) - 1n
-    let v = value < 0n ? (1n << 128n) + value : value
+    const v = value < 0n ? (1n << 128n) + value : value
     this.buf.writeBigUInt64LE(v & mask64, this.pos)
     this.buf.writeBigUInt64LE((v >> 64n) & mask64, this.pos + 8)
     this.pos += 16

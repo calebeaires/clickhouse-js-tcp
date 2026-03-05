@@ -1,4 +1,4 @@
-import { BinaryReader } from './binary_reader'
+import type { BinaryReader } from './binary_reader'
 
 export interface ProgressPacket {
   rows: number

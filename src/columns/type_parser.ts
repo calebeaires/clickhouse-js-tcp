@@ -116,9 +116,7 @@ function splitArgs(str: string): string[] {
   return args
 }
 
-export function parseEnumEntries(
-  params: string[],
-): Array<[string, number]> {
+export function parseEnumEntries(params: string[]): Array<[string, number]> {
   const entries: Array<[string, number]> = []
   for (const param of params) {
     // Format: 'name' = value

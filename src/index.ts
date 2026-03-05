@@ -1,6 +1,7 @@
-import * as Stream from 'stream'
+import type * as Stream from 'stream'
 import { ClickHouseClient } from '@clickhouse/client-common'
-import { TcpImpl, TcpClickHouseClientConfigOptions } from './config'
+import type { TcpClickHouseClientConfigOptions } from './config'
+import { TcpImpl } from './config'
 import type { TcpClickHouseClient } from './client'
 
 export function createClient(
@@ -21,12 +22,12 @@ export function createClient(
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
   return new ClickHouseClient<Stream.Readable>({
     impl: TcpImpl,
     ...(config || {}),
     url,
     tls,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any) as TcpClickHouseClient
 }
 

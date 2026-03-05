@@ -1,6 +1,7 @@
-import { BinaryReader } from './binary_reader'
-import { BinaryWriter } from './binary_writer'
-import { BlockInfo, readBlockInfo, writeBlockInfo } from './block_info'
+import type { BinaryReader } from './binary_reader'
+import type { BinaryWriter } from './binary_writer'
+import type { BlockInfo } from './block_info'
+import { readBlockInfo, writeBlockInfo } from './block_info'
 import { ClientPacketType } from './packet_types'
 
 export interface ColumnData {
@@ -37,10 +38,7 @@ export function writeEmptyBlock(writer: BinaryWriter): void {
   writer.writeVarUInt(0)
 }
 
-export function writeBlockHeader(
-  writer: BinaryWriter,
-  block: Block,
-): void {
+export function writeBlockHeader(writer: BinaryWriter, block: Block): void {
   writeBlockInfo(writer, block.info)
   writer.writeVarUInt(block.columns.length)
   writer.writeVarUInt(block.rows)
@@ -52,9 +50,22 @@ export interface BlockHeader {
   numRows: number
 }
 
+const MAX_COLUMNS = 10_000
+const MAX_ROWS_PER_BLOCK = 10_000_000
+
 export function readBlockHeader(reader: BinaryReader): BlockHeader {
   const info = readBlockInfo(reader)
   const numColumns = reader.readVarUInt()
   const numRows = reader.readVarUInt()
+  if (numColumns > MAX_COLUMNS) {
+    throw new Error(
+      `Block column count ${numColumns} exceeds maximum ${MAX_COLUMNS}`,
+    )
+  }
+  if (numRows > MAX_ROWS_PER_BLOCK) {
+    throw new Error(
+      `Block row count ${numRows} exceeds maximum ${MAX_ROWS_PER_BLOCK}`,
+    )
+  }
   return { info, numColumns, numRows }
 }

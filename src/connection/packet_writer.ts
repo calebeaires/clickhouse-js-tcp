@@ -1,21 +1,18 @@
 import { BinaryWriter } from '../protocol/binary_writer'
-import { SocketManager } from './socket_manager'
-import {
-  writeClientHello,
-  writeClientAddendum,
-  ClientHelloParams,
-} from '../protocol/handshake'
+import type { SocketManager } from './socket_manager'
+import type { ClientHelloParams } from '../protocol/handshake'
+import { writeClientHello, writeClientAddendum } from '../protocol/handshake'
+import type { QueryParams } from '../protocol/query_packet'
 import {
   writeQueryPacket,
   writePingPacket,
   writeCancelPacket,
-  QueryParams,
 } from '../protocol/query_packet'
+import type { Block } from '../protocol/data_packet'
 import {
   writeDataPacketHeader,
   writeEmptyBlock,
   writeBlockHeader,
-  Block,
 } from '../protocol/data_packet'
 import type { ColumnWriter } from '../columns/column'
 import { compressBlock } from '../compression/lz4'
@@ -65,10 +62,7 @@ export class PacketWriter {
     this.socket.uncork()
   }
 
-  sendDataBlock(
-    block: Block,
-    columnWriters: ColumnWriter[],
-  ): void {
+  sendDataBlock(block: Block, columnWriters: ColumnWriter[]): void {
     this.reusableWriter.reset()
     writeDataPacketHeader(this.reusableWriter)
     writeBlockHeader(this.reusableWriter, block)
@@ -82,10 +76,7 @@ export class PacketWriter {
     this.socket.write(this.reusableWriter.getBuffer())
   }
 
-  sendCompressedDataBlock(
-    block: Block,
-    columnWriters: ColumnWriter[],
-  ): void {
+  sendCompressedDataBlock(block: Block, columnWriters: ColumnWriter[]): void {
     // Write the Data packet header (uncompressed: packet type + temp table name)
     const headerWriter = new BinaryWriter()
     writeDataPacketHeader(headerWriter)

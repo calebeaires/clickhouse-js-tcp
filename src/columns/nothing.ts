@@ -8,6 +8,7 @@ export class NothingCodec implements ColumnCodec {
     for (let i = 0; i < rows; i++) result[i] = null
     return result
   }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   write(_writer: BinaryWriter, _values: unknown[]): void {
     // Nothing type has no data
   }

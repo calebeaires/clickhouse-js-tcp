@@ -26,7 +26,8 @@ export class Enum8Codec implements ColumnCodec {
         writer.writeInt8(v)
       } else {
         const num = this.nameToValue.get(v as string)
-        if (num === undefined) throw new Error(`Unknown enum value: ${v}`)
+        if (num === undefined)
+          throw new Error(`Unknown enum value: ${String(v)}`)
         writer.writeInt8(num)
       }
     }
@@ -57,7 +58,8 @@ export class Enum16Codec implements ColumnCodec {
         writer.writeInt16(v)
       } else {
         const num = this.nameToValue.get(v as string)
-        if (num === undefined) throw new Error(`Unknown enum value: ${v}`)
+        if (num === undefined)
+          throw new Error(`Unknown enum value: ${String(v)}`)
         writer.writeInt16(num)
       }
     }

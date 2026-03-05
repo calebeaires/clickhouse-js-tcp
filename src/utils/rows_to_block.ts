@@ -13,7 +13,9 @@ export function rowsToBlock(
   }
 
   const columns: ColumnData[] = schema.map((s) => ({
-    name: s.name, type: s.type, data: new Array(rows.length),
+    name: s.name,
+    type: s.type,
+    data: new Array(rows.length),
   }))
 
   for (let r = 0; r < rows.length; r++) {

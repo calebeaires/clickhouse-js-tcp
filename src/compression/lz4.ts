@@ -45,7 +45,10 @@ export function compressBlock(data: Buffer): Buffer {
  * Expects the full block including checksum.
  * Returns the decompressed data.
  */
-export function decompressBlock(buf: Buffer, offset = 0): {
+export function decompressBlock(
+  buf: Buffer,
+  offset = 0,
+): {
   data: Buffer
   bytesRead: number
 } {
@@ -56,7 +59,7 @@ export function decompressBlock(buf: Buffer, offset = 0): {
   const blockStart = offset + CHECKSUM_SIZE
   const method = buf[blockStart]
 
-  if (method !== CompressionMethod.LZ4) {
+  if (method !== (CompressionMethod.LZ4 as number)) {
     throw new Error(`Unsupported compression method: 0x${method.toString(16)}`)
   }
 
@@ -102,7 +105,10 @@ export function lz4CompressBlock(input: Buffer): Buffer {
 
   const hashFn = (pos: number): number => {
     const val =
-      input[pos] | (input[pos + 1] << 8) | (input[pos + 2] << 16) | (input[pos + 3] << 24)
+      input[pos] |
+      (input[pos + 1] << 8) |
+      (input[pos + 2] << 16) |
+      (input[pos + 3] << 24)
     return ((val * 2654435761) >>> 0) >> 18
   }
 
@@ -133,7 +139,10 @@ export function lz4CompressBlock(input: Buffer): Buffer {
 
       // Find match length
       let matchLen = 4
-      while (ip + matchLen < len && input[ref + matchLen] === input[ip + matchLen]) {
+      while (
+        ip + matchLen < len &&
+        input[ref + matchLen] === input[ip + matchLen]
+      ) {
         matchLen++
       }
 
@@ -233,7 +242,8 @@ export function lz4DecompressBlock(
     if (litLen === 15) {
       let b: number
       do {
-        if (ip >= input.length) throw new Error('LZ4: unexpected end of input reading literal length')
+        if (ip >= input.length)
+          throw new Error('LZ4: unexpected end of input reading literal length')
         b = input[ip++]
         litLen += b
       } while (b === 255)
@@ -269,7 +279,8 @@ export function lz4DecompressBlock(
     if ((token & 0x0f) === 15) {
       let b: number
       do {
-        if (ip >= input.length) throw new Error('LZ4: unexpected end of input reading match length')
+        if (ip >= input.length)
+          throw new Error('LZ4: unexpected end of input reading match length')
         b = input[ip++]
         matchLen += b
       } while (b === 255)

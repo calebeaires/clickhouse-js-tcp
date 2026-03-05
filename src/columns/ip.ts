@@ -22,8 +22,7 @@ export class IPv4Codec implements ColumnCodec {
     for (const v of values) {
       const parts = (v as string).split('.').map(Number)
       const val =
-        ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>>
-        0
+        ((parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3]) >>> 0
       writer.writeUInt32(val)
     }
   }
@@ -96,7 +95,7 @@ function parseIPv6(str: string): Buffer {
     const rightParts = right ? right.split(':') : []
     const missing = 8 - leftParts.length - rightParts.length
     const middle = new Array(missing).fill('0')
-    expanded = [...leftParts, ...middle, ...rightParts].join(':')
+    expanded = [...leftParts, ...(middle as string[]), ...rightParts].join(':')
   }
 
   const groups = expanded.split(':')

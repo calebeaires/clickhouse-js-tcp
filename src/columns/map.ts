@@ -2,6 +2,8 @@ import type { ColumnCodec } from './column'
 import type { BinaryReader } from '../protocol/binary_reader'
 import type { BinaryWriter } from '../protocol/binary_writer'
 
+const MAX_MAP_ELEMENTS = 100_000_000 // 100M — prevent OOM from malicious offsets
+
 export class MapCodec implements ColumnCodec {
   constructor(
     private readonly keyCodec: ColumnCodec,
@@ -11,9 +13,20 @@ export class MapCodec implements ColumnCodec {
   read(reader: BinaryReader, rows: number): Record<string, unknown>[] {
     // Read offsets (UInt64 per row)
     const offsets = new Array<number>(rows)
-    for (let i = 0; i < rows; i++) offsets[i] = Number(reader.readUInt64())
+    for (let i = 0; i < rows; i++) {
+      const raw = reader.readUInt64()
+      if (raw > BigInt(Number.MAX_SAFE_INTEGER)) {
+        throw new Error(`Map offset ${raw} exceeds Number.MAX_SAFE_INTEGER`)
+      }
+      offsets[i] = Number(raw)
+    }
 
     const totalElements = rows > 0 ? offsets[rows - 1] : 0
+    if (totalElements > MAX_MAP_ELEMENTS) {
+      throw new Error(
+        `Map total elements ${totalElements} exceeds maximum ${MAX_MAP_ELEMENTS}`,
+      )
+    }
 
     // Read keys and values flat
     const allKeys = this.keyCodec.read(reader, totalElements)

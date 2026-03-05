@@ -1,9 +1,14 @@
-import * as Stream from 'stream'
-import type { BaseResultSet, ResponseHeaders, DataFormat } from '@clickhouse/client-common'
+import type * as Stream from 'stream'
+import type {
+  BaseResultSet,
+  ResponseHeaders,
+  DataFormat,
+} from '@clickhouse/client-common'
 
-export class TcpResultSet<Format extends DataFormat | unknown>
-  implements BaseResultSet<Stream.Readable, Format>
-{
+export class TcpResultSet<Format extends DataFormat> implements BaseResultSet<
+  Stream.Readable,
+  Format
+> {
   readonly query_id: string
   readonly response_headers: ResponseHeaders
   private _stream: Stream.Readable
@@ -19,7 +24,7 @@ export class TcpResultSet<Format extends DataFormat | unknown>
     this.response_headers = params.response_headers
   }
 
-  static instance<F extends DataFormat | unknown>(params: {
+  static instance<F extends DataFormat>(params: {
     stream: Stream.Readable
     format: F
     query_id: string
@@ -39,13 +44,11 @@ export class TcpResultSet<Format extends DataFormat | unknown>
     return rows.map((r) => JSON.stringify(r)).join('\n')
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async json<T = unknown>(): Promise<any> {
     const rows = await this.collectRows()
     return rows as T[]
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   stream(): any {
     if (this._consumed) {
       throw new Error('ResultSet stream already consumed')
