@@ -1,0 +1,63 @@
+{
+  "name": "clickhouse-js-tcp",
+  "description": "ClickHouse TCP native protocol driver for Node.js",
+  "homepage": "https://github.com/calebeaires/clickhouse-js-tcp",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "author": "calebeaires",
+  "keywords": [
+    "clickhouse",
+    "sql",
+    "client",
+    "tcp",
+    "native-protocol"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/calebeaires/clickhouse-js-tcp.git"
+  },
+  "private": false,
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bugs": {
+    "url": "https://github.com/calebeaires/clickhouse-js-tcp/issues"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "build": "rm -rf dist; tsc",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test": "vitest run --config vitest.config.ts",
+    "prettify": "prettier --write .",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@clickhouse/client-common": "1.18.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^25.2.3",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-expect-type": "^0.6.2",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.55.0",
+    "vitest": "^4.0.16"
+  }
+}
