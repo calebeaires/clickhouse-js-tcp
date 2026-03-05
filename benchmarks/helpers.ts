@@ -51,11 +51,18 @@ export function printTable(results: BenchmarkResult[]): void {
     `${c}${''.padEnd(col.scenario, '\u2500')}${c}${''.padEnd(col.rows, '\u2500')}${c}${''.padEnd(col.time, '\u2500')}${c}${''.padEnd(col.time, '\u2500')}${c}${''.padEnd(col.speedup, '\u2500')}${c}`
 
   console.log('\n=== ClickHouse Benchmark: TCP vs HTTP ===\n')
-  console.log(hr('\u250c').replace(/\u250c/g, (_, i) => (i === 0 ? '\u250c' : '\u252c')).replace(/^./, '\u250c').replace(/.$/, '\u2510'))
+  console.log(
+    hr('\u250c')
+      .replace(/\u250c/g, (_, i) => (i === 0 ? '\u250c' : '\u252c'))
+      .replace(/^./, '\u250c')
+      .replace(/.$/, '\u2510'),
+  )
 
   const header = `\u2502 ${pad('Scenario', col.scenario - 2)} \u2502 ${pad('Rows', col.rows - 2)} \u2502 ${rpad('TCP (ms)', col.time - 2)} \u2502 ${rpad('HTTP (ms)', col.time - 2)} \u2502 ${rpad('Speedup', col.speedup - 2)} \u2502`
   console.log(header)
-  console.log(`\u251c${''.padEnd(col.scenario, '\u2500')}\u253c${''.padEnd(col.rows, '\u2500')}\u253c${''.padEnd(col.time, '\u2500')}\u253c${''.padEnd(col.time, '\u2500')}\u253c${''.padEnd(col.speedup, '\u2500')}\u2524`)
+  console.log(
+    `\u251c${''.padEnd(col.scenario, '\u2500')}\u253c${''.padEnd(col.rows, '\u2500')}\u253c${''.padEnd(col.time, '\u2500')}\u253c${''.padEnd(col.time, '\u2500')}\u253c${''.padEnd(col.speedup, '\u2500')}\u2524`,
+  )
 
   for (const r of results) {
     const speedup = r.httpMs / r.tcpMs
@@ -63,5 +70,7 @@ export function printTable(results: BenchmarkResult[]): void {
     console.log(row)
   }
 
-  console.log(`\u2514${''.padEnd(col.scenario, '\u2500')}\u2534${''.padEnd(col.rows, '\u2500')}\u2534${''.padEnd(col.time, '\u2500')}\u2534${''.padEnd(col.time, '\u2500')}\u2534${''.padEnd(col.speedup, '\u2500')}\u2518`)
+  console.log(
+    `\u2514${''.padEnd(col.scenario, '\u2500')}\u2534${''.padEnd(col.rows, '\u2500')}\u2534${''.padEnd(col.time, '\u2500')}\u2534${''.padEnd(col.time, '\u2500')}\u2534${''.padEnd(col.speedup, '\u2500')}\u2518`,
+  )
 }

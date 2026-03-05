@@ -109,8 +109,12 @@ describe('BinaryWriter', () => {
     w.writeInt256(-12345678901234567890123456789012345678901234567890n)
     const r = new BinaryReader(w.getBuffer())
     expect(r.readInt256()).toBe(0n)
-    expect(r.readInt256()).toBe(12345678901234567890123456789012345678901234567890n)
-    expect(r.readInt256()).toBe(-12345678901234567890123456789012345678901234567890n)
+    expect(r.readInt256()).toBe(
+      12345678901234567890123456789012345678901234567890n,
+    )
+    expect(r.readInt256()).toBe(
+      -12345678901234567890123456789012345678901234567890n,
+    )
   })
 
   it('should write and read Float32', () => {

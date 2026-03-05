@@ -1,7 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { BinaryWriter } from '../../../src/protocol/binary_writer'
 import { BinaryReader } from '../../../src/protocol/binary_reader'
-import { DateCodec, Date32Codec, DateTimeCodec, DateTime64Codec } from '../../../src/columns/datetime'
+import {
+  DateCodec,
+  Date32Codec,
+  DateTimeCodec,
+  DateTime64Codec,
+} from '../../../src/columns/datetime'
 
 describe('DateTime Column Codecs', () => {
   it('Date roundtrip', () => {

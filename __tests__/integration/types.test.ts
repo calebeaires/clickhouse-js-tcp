@@ -45,7 +45,8 @@ describe('UUID type', () => {
 
   it('should select Nullable(UUID)', async () => {
     const rs = await client.query({
-      query: "SELECT toUUID('550e8400-e29b-41d4-a716-446655440000') as val, CAST(NULL AS Nullable(UUID)) as nul",
+      query:
+        "SELECT toUUID('550e8400-e29b-41d4-a716-446655440000') as val, CAST(NULL AS Nullable(UUID)) as nul",
       format: 'JSONEachRow',
     })
     const rows = await rs.json()
@@ -197,10 +198,7 @@ describe('IPv4/IPv6 types', () => {
     try {
       await client.insert({
         table,
-        values: [
-          { ip: '::1' },
-          { ip: '2001:db8::1' },
-        ],
+        values: [{ ip: '::1' }, { ip: '2001:db8::1' }],
         format: 'JSONEachRow',
       })
       const rs = await client.query({
@@ -220,7 +218,8 @@ describe('IPv4/IPv6 types', () => {
 describe('Combined type tests', () => {
   it('should handle Array(UUID)', async () => {
     const rs = await client.query({
-      query: "SELECT [toUUID('550e8400-e29b-41d4-a716-446655440000'), toUUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')] as ids",
+      query:
+        "SELECT [toUUID('550e8400-e29b-41d4-a716-446655440000'), toUUID('6ba7b810-9dad-11d1-80b4-00c04fd430c8')] as ids",
       format: 'JSONEachRow',
     })
     const rows = await rs.json<{ ids: string[] }>()

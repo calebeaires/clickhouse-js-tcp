@@ -85,7 +85,8 @@ describe('createClient() production smoke tests', () => {
 
   it('should handle Nullable types', async () => {
     const rs = await client.query({
-      query: "SELECT toNullable(42) as val, CAST(NULL AS Nullable(String)) as nul",
+      query:
+        'SELECT toNullable(42) as val, CAST(NULL AS Nullable(String)) as nul',
       format: 'JSONEachRow',
     })
     const rows = await rs.json()
@@ -96,7 +97,8 @@ describe('createClient() production smoke tests', () => {
 
   it('should handle DateTime types', async () => {
     const rs = await client.query({
-      query: "SELECT toDate('2024-01-15') as d, toDateTime('2024-01-15 10:30:00') as dt",
+      query:
+        "SELECT toDate('2024-01-15') as d, toDateTime('2024-01-15 10:30:00') as dt",
       format: 'JSONEachRow',
     })
     const rows = await rs.json()

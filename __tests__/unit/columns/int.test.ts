@@ -2,13 +2,28 @@ import { describe, it, expect } from 'vitest'
 import { BinaryWriter } from '../../../src/protocol/binary_writer'
 import { BinaryReader } from '../../../src/protocol/binary_reader'
 import {
-  UInt8Codec, UInt16Codec, UInt32Codec, UInt64Codec,
-  Int8Codec, Int16Codec, Int32Codec, Int64Codec,
-  Int128Codec, UInt128Codec, Int256Codec, UInt256Codec,
+  UInt8Codec,
+  UInt16Codec,
+  UInt32Codec,
+  UInt64Codec,
+  Int8Codec,
+  Int16Codec,
+  Int32Codec,
+  Int64Codec,
+  Int128Codec,
+  UInt128Codec,
+  Int256Codec,
+  UInt256Codec,
 } from '../../../src/columns/int'
 
 describe('Integer Column Codecs', () => {
-  function roundtrip<T>(codec: { read: (r: BinaryReader, n: number) => T[]; write: (w: BinaryWriter, v: unknown[]) => void }, values: T[]): T[] {
+  function roundtrip<T>(
+    codec: {
+      read: (r: BinaryReader, n: number) => T[]
+      write: (w: BinaryWriter, v: unknown[]) => void
+    },
+    values: T[],
+  ): T[] {
     const w = new BinaryWriter()
     codec.write(w, values as unknown[])
     const r = new BinaryReader(w.getBuffer())
@@ -27,13 +42,16 @@ describe('Integer Column Codecs', () => {
 
   it('UInt32 roundtrip', () => {
     const codec = new UInt32Codec()
-    expect(roundtrip(codec, [0, 123456, 4294967295])).toEqual([0, 123456, 4294967295])
+    expect(roundtrip(codec, [0, 123456, 4294967295])).toEqual([
+      0, 123456, 4294967295,
+    ])
   })
 
   it('UInt64 roundtrip', () => {
     const codec = new UInt64Codec()
-    expect(roundtrip(codec, [0n, 123456789012345n, 18446744073709551615n]))
-      .toEqual([0n, 123456789012345n, 18446744073709551615n])
+    expect(
+      roundtrip(codec, [0n, 123456789012345n, 18446744073709551615n]),
+    ).toEqual([0n, 123456789012345n, 18446744073709551615n])
   })
 
   it('Int8 roundtrip', () => {
@@ -48,18 +66,25 @@ describe('Integer Column Codecs', () => {
 
   it('Int32 roundtrip', () => {
     const codec = new Int32Codec()
-    expect(roundtrip(codec, [-2147483648, 0, 2147483647])).toEqual([-2147483648, 0, 2147483647])
+    expect(roundtrip(codec, [-2147483648, 0, 2147483647])).toEqual([
+      -2147483648, 0, 2147483647,
+    ])
   })
 
   it('Int64 roundtrip', () => {
     const codec = new Int64Codec()
-    expect(roundtrip(codec, [-9223372036854775808n, 0n, 9223372036854775807n]))
-      .toEqual([-9223372036854775808n, 0n, 9223372036854775807n])
+    expect(
+      roundtrip(codec, [-9223372036854775808n, 0n, 9223372036854775807n]),
+    ).toEqual([-9223372036854775808n, 0n, 9223372036854775807n])
   })
 
   it('Int128 roundtrip', () => {
     const codec = new Int128Codec()
-    const values = [0n, 123456789012345678901234567890n, -123456789012345678901234567890n]
+    const values = [
+      0n,
+      123456789012345678901234567890n,
+      -123456789012345678901234567890n,
+    ]
     expect(roundtrip(codec, values)).toEqual(values)
   })
 

@@ -26,11 +26,11 @@ describe('Handshake', () => {
   it('should read server hello', () => {
     const w = new BinaryWriter()
     w.writeString('ClickHouse') // server_name
-    w.writeVarUInt(24)           // version_major
-    w.writeVarUInt(1)            // version_minor
-    w.writeVarUInt(54470)        // revision
-    w.writeString('UTC')         // timezone
-    w.writeString('node-1')      // display_name
+    w.writeVarUInt(24) // version_major
+    w.writeVarUInt(1) // version_minor
+    w.writeVarUInt(54470) // revision
+    w.writeString('UTC') // timezone
+    w.writeString('node-1') // display_name
 
     const r = new BinaryReader(w.getBuffer())
     const hello = readServerHello(r)
@@ -56,11 +56,11 @@ describe('Handshake', () => {
 
   it('should read server exception', () => {
     const w = new BinaryWriter()
-    w.writeInt32(62)              // code
+    w.writeInt32(62) // code
     w.writeString('DB::Exception') // name
     w.writeString('Table not found') // message
     w.writeString('stack trace here') // stack trace
-    w.writeBool(false)            // no nested
+    w.writeBool(false) // no nested
 
     const r = new BinaryReader(w.getBuffer())
     const ex = readServerException(r)

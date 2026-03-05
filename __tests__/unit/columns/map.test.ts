@@ -8,11 +8,7 @@ import { UInt32Codec } from '../../../src/columns/int'
 describe('Map Column Codec', () => {
   it('Map(String, UInt32) roundtrip', () => {
     const codec = new MapCodec(new StringCodec(), new UInt32Codec())
-    const values = [
-      { a: 1, b: 2 },
-      { x: 42 },
-      {},
-    ]
+    const values = [{ a: 1, b: 2 }, { x: 42 }, {}]
     const w = new BinaryWriter()
     codec.write(w, values)
     const r = new BinaryReader(w.getBuffer())

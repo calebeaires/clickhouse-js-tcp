@@ -1,10 +1,14 @@
 import type { BenchmarkResult } from '../helpers'
 import { measure } from '../helpers'
 
-export async function runStreamSelect(tcpClient: any, httpClient: any): Promise<BenchmarkResult> {
+export async function runStreamSelect(
+  tcpClient: any,
+  httpClient: any,
+): Promise<BenchmarkResult> {
   console.log('  Running: Stream SELECT 500k rows (3 iterations)...')
 
-  const query = 'SELECT toUInt32(number) as n, toString(number) as str FROM system.numbers LIMIT 500000'
+  const query =
+    'SELECT toUInt32(number) as n, toString(number) as str FROM system.numbers LIMIT 500000'
 
   const tcpMs = await measure(async () => {
     const rs = await tcpClient.query({ query, format: 'JSONEachRow' })

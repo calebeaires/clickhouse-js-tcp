@@ -67,36 +67,36 @@ await client.close()
 ```typescript
 const client = createClient({
   // Connection
-  host: 'localhost:9000',       // or use url: 'tcp://user:pass@host:9000/db'
+  host: 'localhost:9000', // or use url: 'tcp://user:pass@host:9000/db'
   username: process.env.CLICKHOUSE_USER ?? 'default',
   password: process.env.CLICKHOUSE_PASSWORD ?? '',
   database: 'default',
 
   // Behavior
-  request_timeout: 30_000,      // Query timeout in ms (default: 30s)
-  compression: true,            // Enable LZ4 compression (default: false)
+  request_timeout: 30_000, // Query timeout in ms (default: 30s)
+  compression: true, // Enable LZ4 compression (default: false)
 
   // TLS (optional — enables TCPS)
   tls: {
     ca_cert: Buffer.from('...'),
-    cert: Buffer.from('...'),   // For mutual TLS
-    key: Buffer.from('...'),    // For mutual TLS
+    cert: Buffer.from('...'), // For mutual TLS
+    key: Buffer.from('...'), // For mutual TLS
   },
 })
 ```
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `host` | `string` | `'localhost:9000'` | ClickHouse native protocol address |
-| `url` | `string` | — | Connection URL (`tcp://` or `tcps://` scheme) |
-| `username` | `string` | `'default'` | ClickHouse username |
-| `password` | `string` | `''` | ClickHouse password |
-| `database` | `string` | `'default'` | Default database |
-| `request_timeout` | `number` | `30000` | Query timeout in milliseconds |
-| `compression` | `boolean` | `false` | Enable LZ4 block compression |
-| `tls.ca_cert` | `Buffer \| string` | — | CA certificate for TLS |
-| `tls.cert` | `Buffer \| string` | — | Client certificate (mutual TLS) |
-| `tls.key` | `Buffer \| string` | — | Client private key (mutual TLS) |
+| Option            | Type               | Default            | Description                                   |
+| ----------------- | ------------------ | ------------------ | --------------------------------------------- |
+| `host`            | `string`           | `'localhost:9000'` | ClickHouse native protocol address            |
+| `url`             | `string`           | —                  | Connection URL (`tcp://` or `tcps://` scheme) |
+| `username`        | `string`           | `'default'`        | ClickHouse username                           |
+| `password`        | `string`           | `''`               | ClickHouse password                           |
+| `database`        | `string`           | `'default'`        | Default database                              |
+| `request_timeout` | `number`           | `30000`            | Query timeout in milliseconds                 |
+| `compression`     | `boolean`          | `false`            | Enable LZ4 block compression                  |
+| `tls.ca_cert`     | `Buffer \| string` | —                  | CA certificate for TLS                        |
+| `tls.cert`        | `Buffer \| string` | —                  | Client certificate (mutual TLS)               |
+| `tls.key`         | `Buffer \| string` | —                  | Client private key (mutual TLS)               |
 
 ## API Reference
 
@@ -177,35 +177,35 @@ const secureClient = createClient({
 
 ## Supported Column Types
 
-| Category | Types |
-|----------|-------|
-| **Integers** | UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, Int128, Int256 |
-| **Floats** | Float32, Float64 |
-| **Decimals** | Decimal32, Decimal64, Decimal128 |
-| **Strings** | String, FixedString(N) |
-| **Date/Time** | Date, Date32, DateTime, DateTime64 |
-| **Boolean** | Bool |
-| **UUID** | UUID |
-| **Network** | IPv4, IPv6 |
-| **Enums** | Enum8, Enum16 |
-| **Nullable** | Nullable(T) |
-| **Arrays** | Array(T) |
-| **Maps** | Map(K, V) |
-| **Tuples** | Tuple(T1, T2, ...) |
-| **Low Cardinality** | LowCardinality(T) |
-| **Special** | Nothing |
+| Category            | Types                                                                    |
+| ------------------- | ------------------------------------------------------------------------ |
+| **Integers**        | UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, Int128, Int256 |
+| **Floats**          | Float32, Float64                                                         |
+| **Decimals**        | Decimal32, Decimal64, Decimal128                                         |
+| **Strings**         | String, FixedString(N)                                                   |
+| **Date/Time**       | Date, Date32, DateTime, DateTime64                                       |
+| **Boolean**         | Bool                                                                     |
+| **UUID**            | UUID                                                                     |
+| **Network**         | IPv4, IPv6                                                               |
+| **Enums**           | Enum8, Enum16                                                            |
+| **Nullable**        | Nullable(T)                                                              |
+| **Arrays**          | Array(T)                                                                 |
+| **Maps**            | Map(K, V)                                                                |
+| **Tuples**          | Tuple(T1, T2, ...)                                                       |
+| **Low Cardinality** | LowCardinality(T)                                                        |
+| **Special**         | Nothing                                                                  |
 
 ## Benchmark: TCP vs HTTP
 
 Performance comparison against the official HTTP-based `@clickhouse/client` driver. Run with `npm run benchmark`.
 
-| Scenario | Rows | TCP (ms) | HTTP (ms) | Speedup |
-|----------|------|----------|-----------|---------|
-| Ping (avg x50) | - | 173.86 | 177.79 | **1.02x** |
-| SELECT 1k rows | 1,000 | 218.15 | 201.93 | 0.93x |
-| SELECT 100k rows | 100,000 | 1,098.24 | 2,823.47 | **2.57x** |
-| INSERT 10k rows | 10,000 | 753.10 | 1,229.40 | **1.63x** |
-| INSERT 100k rows | 100,000 | 843.27 | 1,260.31 | **1.49x** |
+| Scenario         | Rows    | TCP (ms) | HTTP (ms) | Speedup   |
+| ---------------- | ------- | -------- | --------- | --------- |
+| Ping (avg x50)   | -       | 173.86   | 177.79    | **1.02x** |
+| SELECT 1k rows   | 1,000   | 218.15   | 201.93    | 0.93x     |
+| SELECT 100k rows | 100,000 | 1,098.24 | 2,823.47  | **2.57x** |
+| INSERT 10k rows  | 10,000  | 753.10   | 1,229.40  | **1.63x** |
+| INSERT 100k rows | 100,000 | 843.27   | 1,260.31  | **1.49x** |
 | Stream 500k rows | 500,000 | 5,998.66 | 14,747.75 | **2.46x** |
 
 The TCP native protocol excels across all scenarios — large streaming reads (2.5x faster), bulk inserts (1.5x faster), and matches HTTP for small operations. Binary serialization avoids JSON parsing overhead, and connection pooling with smart health-checks minimizes latency.

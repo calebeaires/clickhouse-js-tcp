@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { lz4CompressBlock, lz4DecompressBlock, compressBlock, decompressBlock } from '../../../src/compression/lz4'
+import {
+  lz4CompressBlock,
+  lz4DecompressBlock,
+  compressBlock,
+  decompressBlock,
+} from '../../../src/compression/lz4'
 
 describe('LZ4', () => {
   it('should compress and decompress empty buffer', () => {
@@ -17,7 +22,9 @@ describe('LZ4', () => {
   })
 
   it('should compress and decompress repetitive data', () => {
-    const input = Buffer.from('ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC')
+    const input = Buffer.from(
+      'ABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABCABC',
+    )
     const compressed = lz4CompressBlock(input)
     // Repetitive data should compress
     expect(compressed.length).toBeLessThan(input.length)

@@ -15,9 +15,17 @@ async function main() {
   const { createClient: createHttpClient } = await import('@clickhouse/client')
 
   const makeTcp = () =>
-    createTcpClient({ url: `http://${host}:9000`, username: 'default', password })
+    createTcpClient({
+      url: `http://${host}:9000`,
+      username: 'default',
+      password,
+    })
   const makeHttp = () =>
-    createHttpClient({ url: `http://${host}:8123`, username: 'default', password })
+    createHttpClient({
+      url: `http://${host}:8123`,
+      username: 'default',
+      password,
+    })
 
   // Verify connectivity
   console.log('Verifying connections...')

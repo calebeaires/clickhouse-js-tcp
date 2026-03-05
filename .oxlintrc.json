@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "rules": {
+    "eqeqeq": "error",
+    "no-console": "error",
+    "unicorn/no-new-array": "off",
+    "unicorn/no-useless-fallback-in-spread": "off"
+  },
+  "overrides": [
+    {
+      "files": ["__tests__/**/*.ts", "**/__tests__/**/*.ts"],
+      "rules": {
+        "no-console": "off",
+        "no-constant-condition": "off"
+      }
+    }
+  ],
+  "ignorePatterns": ["dist/**", "node_modules/**", "benchmarks/**"]
+}

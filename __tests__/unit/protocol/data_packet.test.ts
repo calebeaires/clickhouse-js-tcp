@@ -2,7 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { BinaryWriter } from '../../../src/protocol/binary_writer'
 import { BinaryReader } from '../../../src/protocol/binary_reader'
 import { writeBlockInfo, readBlockInfo } from '../../../src/protocol/block_info'
-import { readBlockHeader, writeBlockHeader } from '../../../src/protocol/data_packet'
+import {
+  readBlockHeader,
+  writeBlockHeader,
+} from '../../../src/protocol/data_packet'
 
 describe('BlockInfo', () => {
   it('should roundtrip block info', () => {

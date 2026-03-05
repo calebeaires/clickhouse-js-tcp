@@ -1,7 +1,10 @@
 import type { BenchmarkResult } from '../helpers'
 import { measure } from '../helpers'
 
-export async function runSelectSmall(tcpClient: any, httpClient: any): Promise<BenchmarkResult> {
+export async function runSelectSmall(
+  tcpClient: any,
+  httpClient: any,
+): Promise<BenchmarkResult> {
   console.log('  Running: SELECT 1,000 rows (10 iterations)...')
 
   const query = 'SELECT toUInt32(number) as n FROM system.numbers LIMIT 1000'

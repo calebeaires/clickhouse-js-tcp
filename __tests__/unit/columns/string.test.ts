@@ -6,7 +6,12 @@ import { StringCodec, FixedStringCodec } from '../../../src/columns/string'
 describe('String Column Codecs', () => {
   it('String roundtrip', () => {
     const codec = new StringCodec()
-    const values = ['', 'hello', 'unicode: \u00e9\u00e8\u00ea \u{1f600}', 'a'.repeat(1000)]
+    const values = [
+      '',
+      'hello',
+      'unicode: \u00e9\u00e8\u00ea \u{1f600}',
+      'a'.repeat(1000),
+    ]
     const w = new BinaryWriter()
     codec.write(w, values)
     const r = new BinaryReader(w.getBuffer())

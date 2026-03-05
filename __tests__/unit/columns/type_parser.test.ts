@@ -3,9 +3,21 @@ import { parseType, parseEnumEntries } from '../../../src/columns/type_parser'
 
 describe('Type Parser', () => {
   it('simple types', () => {
-    expect(parseType('UInt32')).toEqual({ name: 'UInt32', params: [], innerTypes: [] })
-    expect(parseType('String')).toEqual({ name: 'String', params: [], innerTypes: [] })
-    expect(parseType('Float64')).toEqual({ name: 'Float64', params: [], innerTypes: [] })
+    expect(parseType('UInt32')).toEqual({
+      name: 'UInt32',
+      params: [],
+      innerTypes: [],
+    })
+    expect(parseType('String')).toEqual({
+      name: 'String',
+      params: [],
+      innerTypes: [],
+    })
+    expect(parseType('Float64')).toEqual({
+      name: 'Float64',
+      params: [],
+      innerTypes: [],
+    })
   })
 
   it('Nullable', () => {
@@ -88,11 +100,18 @@ describe('Type Parser', () => {
 describe('parseEnumEntries', () => {
   it('should parse enum entries', () => {
     const entries = parseEnumEntries(["'hello' = 1", "'world' = 2"])
-    expect(entries).toEqual([['hello', 1], ['world', 2]])
+    expect(entries).toEqual([
+      ['hello', 1],
+      ['world', 2],
+    ])
   })
 
   it('should handle negative values', () => {
     const entries = parseEnumEntries(["'a' = -1", "'b' = 0", "'c' = 1"])
-    expect(entries).toEqual([['a', -1], ['b', 0], ['c', 1]])
+    expect(entries).toEqual([
+      ['a', -1],
+      ['b', 0],
+      ['c', 1],
+    ])
   })
 })

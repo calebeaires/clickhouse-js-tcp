@@ -19,7 +19,10 @@ async function truncateTable(client: any, table: string): Promise<void> {
   await client.command({ query: `TRUNCATE TABLE ${table}` })
 }
 
-export async function runInsert(tcpClient: any, httpClient: any): Promise<BenchmarkResult[]> {
+export async function runInsert(
+  tcpClient: any,
+  httpClient: any,
+): Promise<BenchmarkResult[]> {
   console.log('  Running: INSERT 10k rows (3 iterations)...')
 
   const table10k = 'benchmark_insert_10k'
@@ -36,12 +39,20 @@ export async function runInsert(tcpClient: any, httpClient: any): Promise<Benchm
   // INSERT 10k
   const tcp10k = await measure(async () => {
     await truncateTable(tcpClient, table10k)
-    await tcpClient.insert({ table: table10k, values: data10k, format: 'JSONEachRow' })
+    await tcpClient.insert({
+      table: table10k,
+      values: data10k,
+      format: 'JSONEachRow',
+    })
   }, 3)
 
   const http10k = await measure(async () => {
     await truncateTable(tcpClient, table10k)
-    await httpClient.insert({ table: table10k, values: data10k, format: 'JSONEachRow' })
+    await httpClient.insert({
+      table: table10k,
+      values: data10k,
+      format: 'JSONEachRow',
+    })
   }, 3)
 
   console.log('  Running: INSERT 100k rows (3 iterations)...')
@@ -49,12 +60,20 @@ export async function runInsert(tcpClient: any, httpClient: any): Promise<Benchm
   // INSERT 100k
   const tcp100k = await measure(async () => {
     await truncateTable(tcpClient, table100k)
-    await tcpClient.insert({ table: table100k, values: data100k, format: 'JSONEachRow' })
+    await tcpClient.insert({
+      table: table100k,
+      values: data100k,
+      format: 'JSONEachRow',
+    })
   }, 3)
 
   const http100k = await measure(async () => {
     await truncateTable(tcpClient, table100k)
-    await httpClient.insert({ table: table100k, values: data100k, format: 'JSONEachRow' })
+    await httpClient.insert({
+      table: table100k,
+      values: data100k,
+      format: 'JSONEachRow',
+    })
   }, 3)
 
   // Cleanup
@@ -62,7 +81,17 @@ export async function runInsert(tcpClient: any, httpClient: any): Promise<Benchm
   await tcpClient.command({ query: `DROP TABLE IF EXISTS ${table100k}` })
 
   return [
-    { scenario: 'INSERT 10k rows', rows: '10,000', tcpMs: tcp10k, httpMs: http10k },
-    { scenario: 'INSERT 100k rows', rows: '100,000', tcpMs: tcp100k, httpMs: http100k },
+    {
+      scenario: 'INSERT 10k rows',
+      rows: '10,000',
+      tcpMs: tcp10k,
+      httpMs: http10k,
+    },
+    {
+      scenario: 'INSERT 100k rows',
+      rows: '100,000',
+      tcpMs: tcp100k,
+      httpMs: http100k,
+    },
   ]
 }
