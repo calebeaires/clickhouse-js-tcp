@@ -128,7 +128,7 @@ export class BinaryWriter {
   }
 
   writeString(value: string): void {
-    const encoded = Buffer.from(value, 'utf-8')
+    const encoded = Buffer.from(String(value), 'utf-8')
     this.writeVarUInt(encoded.length)
     this.writeRawBytes(encoded)
   }

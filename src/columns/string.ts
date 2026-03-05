@@ -9,7 +9,7 @@ export class StringCodec implements ColumnCodec {
     return result
   }
   write(writer: BinaryWriter, values: unknown[]): void {
-    for (const v of values) writer.writeString(v as string)
+    for (const v of values) writer.writeString(String(v))
   }
 }
 
