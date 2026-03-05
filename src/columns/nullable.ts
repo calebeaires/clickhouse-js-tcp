@@ -22,16 +22,21 @@ export class NullableCodec implements ColumnCodec {
   }
 
   write(writer: BinaryWriter, values: unknown[]): void {
-    // Write nulls mask
-    for (const v of values) writer.writeUInt8(v === null || v === undefined ? 1 : 0)
-
-    // Write inner values — for null slots, we need to read first non-null value
-    // to determine the type-appropriate default, or use the first value's type
-    const firstNonNull = values.find((v) => v !== null && v !== undefined)
-    const defaultVal = getDefaultForValue(firstNonNull)
-    const innerValues = values.map((v) =>
-      v === null || v === undefined ? defaultVal : v,
-    )
+    const innerValues = new Array(values.length)
+    let defaultVal: unknown = 0
+    // Find a non-null sample for the default value
+    for (let i = 0; i < values.length; i++) {
+      if (values[i] !== null && values[i] !== undefined) {
+        defaultVal = getDefaultForValue(values[i])
+        break
+      }
+    }
+    // Single pass: write null mask and build inner values
+    for (let i = 0; i < values.length; i++) {
+      const isNull = values[i] === null || values[i] === undefined
+      writer.writeUInt8(isNull ? 1 : 0)
+      innerValues[i] = isNull ? defaultVal : values[i]
+    }
     this.inner.write(writer, innerValues)
   }
 }

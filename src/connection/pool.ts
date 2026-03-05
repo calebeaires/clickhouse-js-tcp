@@ -34,6 +34,7 @@ export class TcpConnectionPool {
     if (this.closed) throw new Error('Connection pool is closed')
 
     // Try to get an idle connection with health check
+    const HEALTH_CHECK_THRESHOLD = 5000 // 5 seconds
     while (this.idle.length > 0) {
       const conn = this.idle.pop()!
 
@@ -43,17 +44,22 @@ export class TcpConnectionPool {
         continue
       }
 
-      // Quick health check via ping
-      try {
-        const result = await conn.ping()
-        if (result.success) {
-          this.active.add(conn)
-          return conn
+      // Only health-check if idle longer than threshold
+      if (Date.now() - conn.lastUsed > HEALTH_CHECK_THRESHOLD) {
+        try {
+          const result = await conn.ping()
+          if (!result.success) {
+            conn.close().catch(() => {})
+            continue
+          }
+        } catch {
+          conn.close().catch(() => {})
+          continue
         }
-      } catch {
-        // Ping failed, discard this connection
       }
-      conn.close().catch(() => {})
+
+      this.active.add(conn)
+      return conn
     }
 
     // Try to create a new connection

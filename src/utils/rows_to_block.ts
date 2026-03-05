@@ -12,10 +12,16 @@ export function rowsToBlock(
     }
   }
 
-  const columns: ColumnData[] = schema.map((s) => {
-    const data = rows.map((row) => row[s.name])
-    return { name: s.name, type: s.type, data }
-  })
+  const columns: ColumnData[] = schema.map((s) => ({
+    name: s.name, type: s.type, data: new Array(rows.length),
+  }))
+
+  for (let r = 0; r < rows.length; r++) {
+    const row = rows[r]
+    for (let c = 0; c < columns.length; c++) {
+      columns[c].data[r] = row[schema[c].name]
+    }
+  }
 
   return {
     info: { isOverflows: false, bucketNum: -1 },

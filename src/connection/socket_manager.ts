@@ -105,6 +105,14 @@ export class SocketManager extends EventEmitter {
     return this.socket.write(data)
   }
 
+  cork(): void {
+    this.socket?.cork()
+  }
+
+  uncork(): void {
+    this.socket?.uncork()
+  }
+
   isConnected(): boolean {
     return this.connected && !this.destroyed
   }

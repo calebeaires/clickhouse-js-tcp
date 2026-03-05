@@ -22,6 +22,7 @@ import { compressBlock } from '../compression/lz4'
 
 export class PacketWriter {
   private socket: SocketManager
+  private reusableWriter = new BinaryWriter(65536)
 
   constructor(socket: SocketManager) {
     this.socket = socket
@@ -52,6 +53,7 @@ export class PacketWriter {
   }
 
   sendQuery(params: QueryParams): void {
+    this.socket.cork()
     const writer = new BinaryWriter()
     writeQueryPacket(writer, params)
     this.socket.write(writer.getBuffer())
@@ -60,23 +62,24 @@ export class PacketWriter {
     const emptyWriter = new BinaryWriter()
     writeEmptyBlock(emptyWriter)
     this.socket.write(emptyWriter.getBuffer())
+    this.socket.uncork()
   }
 
   sendDataBlock(
     block: Block,
     columnWriters: ColumnWriter[],
   ): void {
-    const writer = new BinaryWriter()
-    writeDataPacketHeader(writer)
-    writeBlockHeader(writer, block)
+    this.reusableWriter.reset()
+    writeDataPacketHeader(this.reusableWriter)
+    writeBlockHeader(this.reusableWriter, block)
 
     for (let i = 0; i < block.columns.length; i++) {
-      writer.writeString(block.columns[i].name)
-      writer.writeString(block.columns[i].type)
-      columnWriters[i].write(writer, block.columns[i].data)
+      this.reusableWriter.writeString(block.columns[i].name)
+      this.reusableWriter.writeString(block.columns[i].type)
+      columnWriters[i].write(this.reusableWriter, block.columns[i].data)
     }
 
-    this.socket.write(writer.getBuffer())
+    this.socket.write(this.reusableWriter.getBuffer())
   }
 
   sendCompressedDataBlock(

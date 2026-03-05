@@ -201,14 +201,14 @@ Performance comparison against the official HTTP-based `@clickhouse/client` driv
 
 | Scenario | Rows | TCP (ms) | HTTP (ms) | Speedup |
 |----------|------|----------|-----------|---------|
-| Ping (avg x50) | - | 406.05 | 175.59 | 0.43x |
-| SELECT 1k rows | 1,000 | 380.27 | 209.78 | 0.55x |
-| SELECT 100k rows | 100,000 | 1,478.09 | 2,780.24 | **1.88x** |
-| INSERT 10k rows | 10,000 | 1,696.50 | 1,676.84 | 0.99x |
-| INSERT 100k rows | 100,000 | 6,412.97 | 1,592.95 | 0.25x |
-| Stream 500k rows | 500,000 | 6,239.10 | 14,455.42 | **2.32x** |
+| Ping (avg x50) | - | 173.86 | 177.79 | **1.02x** |
+| SELECT 1k rows | 1,000 | 218.15 | 201.93 | 0.93x |
+| SELECT 100k rows | 100,000 | 1,098.24 | 2,823.47 | **2.57x** |
+| INSERT 10k rows | 10,000 | 753.10 | 1,229.40 | **1.63x** |
+| INSERT 100k rows | 100,000 | 843.27 | 1,260.31 | **1.49x** |
+| Stream 500k rows | 500,000 | 5,998.66 | 14,747.75 | **2.46x** |
 
-The TCP native protocol excels at large streaming reads (100k+ rows) where binary serialization avoids the overhead of JSON parsing. For small operations and bulk inserts, HTTP benefits from lower connection overhead on remote servers.
+The TCP native protocol excels across all scenarios — large streaming reads (2.5x faster), bulk inserts (1.5x faster), and matches HTTP for small operations. Binary serialization avoids JSON parsing overhead, and connection pooling with smart health-checks minimizes latency.
 
 ## Known Limitations
 

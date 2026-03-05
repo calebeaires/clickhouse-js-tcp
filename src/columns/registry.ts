@@ -45,9 +45,15 @@ const simpleCodecs: Record<string, () => ColumnCodec> = {
   Nothing: () => new NothingCodec(),
 }
 
+const codecCache = new Map<string, ColumnCodec>()
+
 export function getCodec(typeStr: string): ColumnCodec {
+  let codec = codecCache.get(typeStr)
+  if (codec !== undefined) return codec
   const parsed = parseType(typeStr)
-  return buildCodec(parsed)
+  codec = buildCodec(parsed)
+  codecCache.set(typeStr, codec)
+  return codec
 }
 
 function buildCodec(parsed: ParsedType): ColumnCodec {
