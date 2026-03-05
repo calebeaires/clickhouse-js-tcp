@@ -1,3 +1,4 @@
+import * as crypto from 'crypto'
 import * as Stream from 'stream'
 import type {
   Connection,
@@ -71,6 +72,13 @@ export class TcpConnection implements Connection<Stream.Readable> {
     const auth = this.params.auth
     const username = auth.type === 'Credentials' ? auth.username : 'default'
     const password = auth.type === 'Credentials' ? auth.password : ''
+
+    if (password && !this.extra.tls) {
+      console.warn(
+        'WARNING: ClickHouse credentials are being sent without TLS. ' +
+        'Consider using TLS (tcps://) to encrypt the connection.',
+      )
+    }
 
     this.packetWriter.sendHello({
       database: this.params.database,
@@ -417,7 +425,11 @@ export class TcpConnection implements Connection<Stream.Readable> {
   private createSocketManager(): SocketManager {
     const url = this.params.url
     const host = url.hostname || 'localhost'
-    const port = parseInt(url.port, 10) || 9000
+    const parsedPort = parseInt(url.port, 10) || 9000
+    if (parsedPort < 1 || parsedPort > 65535) {
+      throw new Error(`Invalid port number: ${parsedPort}. Must be between 1 and 65535`)
+    }
+    const port = parsedPort
     return new SocketManager({
       host,
       port,
@@ -576,7 +588,6 @@ export class TcpConnection implements Connection<Stream.Readable> {
     while (true) {
       try {
         const columns: ColumnData[] = []
-        const startOffset = reader.offset
         for (let i = 0; i < numColumns; i++) {
           const name = reader.readString()
           const type = reader.readString()
@@ -686,5 +697,5 @@ export class TcpConnection implements Connection<Stream.Readable> {
 }
 
 function generateQueryId(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+  return crypto.randomUUID()
 }
