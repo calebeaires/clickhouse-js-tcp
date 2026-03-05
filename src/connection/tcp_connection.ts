@@ -159,10 +159,10 @@ export class TcpConnection implements Connection<Stream.Readable> {
         case ServerPacketType.Extremes: {
           const { header, rawReader } = packet.data
           if (header.numRows > 0 && header.numColumns > 0) {
-            const block = this.readBlockColumns(rawReader, header.numColumns, header.numRows)
+            const block = await this.readBlockColumns(rawReader, header.numColumns, header.numRows)
             blocks.push(block)
           } else if (header.numColumns > 0) {
-            this.skipBlockColumns(rawReader, header.numColumns, 0)
+            await this.skipBlockColumns(rawReader, header.numColumns, 0)
           } else {
             this.consumeFromReader(rawReader)
           }
@@ -178,7 +178,7 @@ export class TcpConnection implements Connection<Stream.Readable> {
         case ServerPacketType.ProfileEvents: {
           const { header: h, rawReader: r } = packet.data
           if (h.numRows > 0 && h.numColumns > 0) {
-            this.skipBlockColumns(r, h.numColumns, h.numRows)
+            await this.skipBlockColumns(r, h.numColumns, h.numRows)
           } else {
             this.consumeFromReader(r)
           }
@@ -380,9 +380,9 @@ export class TcpConnection implements Connection<Stream.Readable> {
       ) {
         const { header, rawReader } = packet.data
         if (header.numRows > 0 && header.numColumns > 0) {
-          this.skipBlockColumns(rawReader, header.numColumns, header.numRows)
+          await this.skipBlockColumns(rawReader, header.numColumns, header.numRows)
         } else if (header.numColumns > 0) {
-          this.skipBlockColumns(rawReader, header.numColumns, 0)
+          await this.skipBlockColumns(rawReader, header.numColumns, 0)
         } else {
           this.consumeFromReader(rawReader)
         }
@@ -565,42 +565,88 @@ export class TcpConnection implements Connection<Stream.Readable> {
     }
   }
 
-  private readBlockColumns(
+  private async readBlockColumns(
     reader: BinaryReader,
     numColumns: number,
     numRows: number,
-  ): Block {
-    const columns: ColumnData[] = []
-    for (let i = 0; i < numColumns; i++) {
-      const name = reader.readString()
-      const type = reader.readString()
-      const codec = getCodec(type)
-      const data = codec.read(reader, numRows)
-      columns.push({ name, type, data })
-    }
-    // Update the packet reader buffer to consume what we've read
-    this.consumeFromReader(reader)
-    return {
-      info: { isOverflows: false, bucketNum: -1 },
-      columns,
-      rows: numRows,
+  ): Promise<Block> {
+    // Column data may span multiple TCP packets. If we don't have enough
+    // data, feed the unread portion back to the packet reader, wait for
+    // more socket data, and retry with a fresh reader.
+    while (true) {
+      try {
+        const columns: ColumnData[] = []
+        const startOffset = reader.offset
+        for (let i = 0; i < numColumns; i++) {
+          const name = reader.readString()
+          const type = reader.readString()
+          const codec = getCodec(type)
+          const data = codec.read(reader, numRows)
+          columns.push({ name, type, data })
+        }
+        this.consumeFromReader(reader)
+        return {
+          info: { isOverflows: false, bucketNum: -1 },
+          columns,
+          rows: numRows,
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message.startsWith('Not enough data')) {
+          // Feed ALL unread data (from the start) back to the packet reader
+          const unread = reader.readRawBytesFrom(0)
+          this.packetReader.feed(unread)
+          // Wait for more socket data
+          await this.waitForMoreData()
+          // Drain the packet reader buffer into a new reader
+          const buf = this.packetReader.drainBuffer()
+          reader = new BinaryReader(buf)
+          continue
+        }
+        throw e
+      }
     }
   }
 
-  private skipBlockColumns(
+  private async skipBlockColumns(
     reader: BinaryReader,
     numColumns: number,
     numRows: number,
-  ): void {
-    for (let i = 0; i < numColumns; i++) {
-      reader.readString() // name
-      const type = reader.readString()
-      if (numRows > 0) {
-        const codec = getCodec(type)
-        codec.read(reader, numRows) // read and discard
+  ): Promise<void> {
+    while (true) {
+      try {
+        for (let i = 0; i < numColumns; i++) {
+          reader.readString() // name
+          const type = reader.readString()
+          if (numRows > 0) {
+            const codec = getCodec(type)
+            codec.read(reader, numRows) // read and discard
+          }
+        }
+        this.consumeFromReader(reader)
+        return
+      } catch (e) {
+        if (e instanceof Error && e.message.startsWith('Not enough data')) {
+          const unread = reader.readRawBytesFrom(0)
+          this.packetReader.feed(unread)
+          await this.waitForMoreData()
+          const buf = this.packetReader.drainBuffer()
+          reader = new BinaryReader(buf)
+          continue
+        }
+        throw e
       }
     }
-    this.consumeFromReader(reader)
+  }
+
+  /** Wait until at least one more chunk of data arrives on the socket. */
+  private waitForMoreData(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      const onData = () => {
+        this.socketManager.removeListener('data', onData)
+        resolve()
+      }
+      this.socketManager.on('data', onData)
+    })
   }
 
   private consumeFromReader(reader: BinaryReader): void {

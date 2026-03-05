@@ -217,6 +217,13 @@ export class PacketReader {
     this.buffer = this.buffer.subarray(bytes)
   }
 
+  /** Take the accumulated buffer and reset it. */
+  drainBuffer(): Buffer {
+    const buf = this.buffer
+    this.buffer = Buffer.alloc(0)
+    return buf
+  }
+
   reset(): void {
     this.buffer = Buffer.alloc(0)
   }

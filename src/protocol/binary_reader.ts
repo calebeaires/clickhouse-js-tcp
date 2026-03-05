@@ -179,6 +179,11 @@ export class BinaryReader {
     return this.readFixedString(length)
   }
 
+  /** Return a copy of the internal buffer starting from `from` offset. */
+  readRawBytesFrom(from: number): Buffer {
+    return Buffer.from(this.buf.subarray(from))
+  }
+
   skip(length: number): void {
     this.assertAvailable(length)
     this.pos += length

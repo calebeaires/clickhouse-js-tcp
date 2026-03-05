@@ -43,12 +43,15 @@
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test": "vitest run --config vitest.config.ts",
     "prettify": "prettier --write .",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "benchmark": "tsx benchmarks/run.ts"
   },
   "dependencies": {
     "@clickhouse/client-common": "1.18.1"
   },
   "devDependencies": {
+    "@clickhouse/client": "^1.18.1",
+    "tsx": "^4.19.0",
     "@eslint/js": "^9.39.1",
     "@types/node": "^25.2.3",
     "eslint": "^9.39.2",
